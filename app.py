@@ -10,12 +10,20 @@ mydb = mysql.connector.connect(
 	database="yiiadv"
 )
 
-mycursor = mydb.cursor(dictionary=True)
+mycursor = mydb.cursor(dictionary=True, buffered=True)
 
 app = Flask(__name__)
 api = Api(app)
 
+class IsOnline(Resource):
+	def get(self):
+		try:
+			mycursor.execute("SELECT * FROM twitter")
+			myresult = mycursor.fetchall()
+		except Exception as e:
+			return {'status':False}
 
+		return {'status':True}
 
 class TwitterHomeApi(Resource):
 	def get(self):
@@ -55,13 +63,14 @@ class TwitterHomeApi(Resource):
 
 
 class FindId(Resource):
-	def get(self, index):
-		mycursor.execute("SELECT * FROM `twitter` WHERE twit_id = {0}".format(index))
+	def get(self, t_username):
+		mycursor.execute("SELECT * FROM `twitter` WHERE t_username = '{0}'".format(t_username))
 		myresult = mycursor.fetchall()
 		return {'result':myresult}
 
 api.add_resource(TwitterHomeApi, '/')
-api.add_resource(FindId, '/find_id/<int:index>')
+api.add_resource(IsOnline, '/online/')
+api.add_resource(FindId, '/find_user/<string:t_username>')
 
 if __name__ == "__main__":
 	app.run(debug=True, host='0.0.0.0')
