@@ -34,58 +34,77 @@ var ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 1;
 				},
 				onload: function(response) {
 					if (JSON.parse(response.responseText)['status'] != undefined && JSON.parse(response.responseText)['status'] == true) {
+						if (!IS_ACTIVE) { showMsg("Now Online"); }
 						$(".is_online").removeClass("not_active");
 						$(".is_online").addClass("active");
 						IS_ACTIVE = true;
+						$(".set_check").text(ACTIVE_CHECK_TIME_X_DELAY)
 					}else{
 						$(".is_online").removeClass("active");
 						$(".is_online").addClass("not_active");
 						IS_ACTIVE = false;
 						ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 1;
+						$(".set_check").text(1)
 					}
 				},
 				onerror: function(response) {
+						if (IS_ACTIVE) { showMsg("Offline"); }
 						$(".is_online").removeClass("active");
 						$(".is_online").addClass("not_active");
 						IS_ACTIVE = false;
-						ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 1;
+						ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 0;
 						$(".set_check").text(1)
 				}
 			}
 			GM_xmlhttpRequest(requestOnlineDetails);
 			// console.log("check");
 		}
-		if(IS_ACTIVE){ACTIVE_CHECK_TIME_X_DELAY_COUNTER += 1;}
-		if (ACTIVE_CHECK_TIME_X_DELAY_COUNTER > ACTIVE_CHECK_TIME_X_DELAY) {ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 1;}
 		$(".check_counter").text(ACTIVE_CHECK_TIME_X_DELAY_COUNTER)
+		ACTIVE_CHECK_TIME_X_DELAY_COUNTER += 1;
+		if (ACTIVE_CHECK_TIME_X_DELAY_COUNTER > ACTIVE_CHECK_TIME_X_DELAY) {ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 1;}
 		// console.log(IS_ACTIVE);
 	}
 
 	function loadUI() {
 		const myCss = GM_getResourceText('REMOTE_CSS');
 		GM_addStyle(myCss);
-		GM_addStyle('.code-bar { width: 500px; background-color: #555; position: fixed; right: 0px; z-index: 999;}');//overflow: auto;
+		GM_addStyle('.code-bar { width: 500px; background-color: #555; border-radius: 5px 0 0 5px; position: fixed; top: 20px; right: -480px; z-index: 999; transition: 1s; }');//overflow: auto;
+		GM_addStyle('.code-bar:hover { right: 0; }');
 		GM_addStyle('.code-bar a { float: left; width: 20%; text-align: center; padding: 12px 0; transition: all 0.3s ease; color: white; font-size: 36px; }');
-		GM_addStyle('.code-bar a:hover { background-color: #000;} .active { background-color: #04AA6D; } .not_active { background-color: red; } .paused, .pause_code:hover { background-color: aquamarine !important; }')
+		GM_addStyle('.code-bar a:hover { background-color: #000;} .is_online { border-radius: 5px 0 0 5px; } .active { background-color: #04AA6D; } .not_active { background-color: red; } .paused, .pause_code:hover { background-color: aquamarine !important; }')
 
 
-		GM_addStyle('.tooltip { position: relative; display: inline-block; border-bottom: 1px dotted #ccc; color: #006080;}');
+		GM_addStyle('.tooltip { position: relative; display: inline-block; border-bottom: 2px dotted #ccc; color: #006080;}');
 		// GM_addStyle('.tooltip .tooltiptext { visibility: hidden; width: 120px; background-color: #555; color: #fff; text-align: center; border-radius: 6px; padding: 5px 0; position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -60px; opacity: 0; transition: opacity 0.3s; }');
 		GM_addStyle('.tooltip .tooltip-bottom { top: 115%; left: 50%; margin-left: -60px;}');
 		GM_addStyle('.tooltip-bottom::after { content: ""; position: absolute; bottom: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: transparent transparent #555 transparent;}');
 		GM_addStyle('.tooltip .tooltiptext { font-size: 20px; visibility: hidden; position: absolute; width: 120px; background-color: #555; color: #fff; text-align: center; padding: 5px 0; border-radius: 6px; z-index: 1; opacity: 0; transition: opacity 0.3s;}');
 		GM_addStyle('.tooltip:hover .tooltiptext { visibility: visible; opacity: 1;}')
 
+
+		GM_addStyle('#snackbar { visibility: hidden; min-width: 250px; margin-left: -125px; background-color: #333; color: #fff; text-align: center; border-radius: 2px; padding: 16px; position: fixed; z-index: 9999; left: 50%; bottom: 30px; font-size: 17px; }');
+		GM_addStyle('#snackbar.show { visibility: visible; -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s; animation: fadein 0.5s, fadeout 0.5s 2.5s; }');
+		GM_addStyle('@-webkit-keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }');
+		GM_addStyle('@keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }');
+		GM_addStyle('@-webkit-keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }');
+		GM_addStyle('@keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }');
+
 		var myui = $('<div>',{"class":"code-bar"})
+		.append($('<a>',{"href":"#", "class":"is_online not_active tooltip"}).html($('<img alt="🚦" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/1f6a6.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-bottom">Is Online - Ping in (<span class="check_counter">0</span>/<span class="set_check">0</span>)</span>')))
 		.append($('<a>',{"href":"#", "class":"pause_code tooltip"}).html($('<img alt="⏯" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/23ef.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-bottom">Pause</span>')))
 		.append($('<a>',{"href":"#", "class":"update_code tooltip"}).html($('<img alt="🔄" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/1f504.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-bottom">Force Update</span>')))
 		.append($('<a>',{"href":"#", "class":"view_code tooltip"}).html($('<img alt="💾" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/1f4be.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-bottom">View</span>')))
 		.append($('<a>',{"href":"#", "class":"del_code tooltip"}).html($('<img alt="🗑️" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/1f5d1.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-bottom">Delete</span>')))
-		.append($('<a>',{"href":"#", "class":"is_online not_active tooltip"}).html($('<img alt="🚦" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/1f6a6.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-bottom">Is Online - Ping in (<span class="check_counter">0</span>/<span class="set_check">0</span>)</span>')))
 		if(!$(".code-bar").length){
 			$("body").prepend(myui);
+			$("body").append('<div id="snackbar">Some text some message..</div>');
 		}
-		$(".set_check").text(ACTIVE_CHECK_TIME_X_DELAY)
+	}
+
+	function showMsg(msg) {
+		$("#snackbar").text(msg)
+		$("#snackbar").addClass("show");
+		setTimeout(function(){ $("#snackbar").removeClass("show"); }, 3000);
 	}
 	function track_profile() {
 		var following = 0;
@@ -122,7 +141,7 @@ var ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 1;
 			}
 		}
 
-		console.log(requestDetails);
+		// console.log(requestDetails);
 		GM_xmlhttpRequest(requestDetails);
 	};
 	function track_look_at_followers() {
@@ -138,7 +157,7 @@ var ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 1;
 			}
 		}
 
-		console.log(requestDetails);
+		// console.log(requestDetails);
 		GM_xmlhttpRequest(requestDetails);
 	};
 

@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 from flask import Flask, request, jsonify, make_response
 from flask_restful import Resource, Api, reqparse
 import mysql.connector
@@ -35,31 +36,37 @@ class TwitterHomeApi(Resource):
 		return {'twitter':json_data}
 
 	def post(self):
-		args = request.json
-		proj_id = t_username = desc = ""
-		following = followers = 0
-		if "proj_id" in args:
-			proj_id = int(args["proj_id"])
-		if "t_username" in args:
-			t_username = str(args["t_username"])
-		if "following" in args:
-			following = int(args["following"])
-		if "followers" in args:
-			followers = int(args["followers"])
-		if "desc" in args:
-			desc = str(args["desc"])
-		if "bday" in args:
-			bday = str(args["bday"])
+		try:
+			args = request.json
+			proj_id = t_username = desc = ""
+			following = followers = 0
+			if "proj_id" in args:
+				proj_id = int(args["proj_id"])
+			if "t_username" in args:
+				t_username = str(args["t_username"])
+			if "following" in args:
+				following = int(args["following"])
+			if "followers" in args:
+				followers = int(args["followers"])
+			if "desc" in args:
+				desc = str(args["desc"])
+			if "bday" in args:
+				bday = str(args["bday"])
+		except Exception as e:
+			return make_response(jsonify({"Error":e}), 400);
 
-		mycursor.execute("SELECT * FROM `twitter` WHERE t_username = '{0}'".format(t_username))
-		myresult = mycursor.fetchall()
-		if len(myresult) == 0:
-			sql = "INSERT INTO twitter (`twit_id`, `proj_id`, `t_username`, `following`, `followers`, `description`, `last_tweet_id`, `last_popular_tweet_id`, `bday`) VALUES (NULL, %s, %s, %s, %s, %s, '0', '0', %s)"
-			mycursor.execute(sql, (proj_id, t_username, following, followers, desc, bday))
-			mydb.commit()
-			return make_response(jsonify({"success":bool(mycursor.rowcount)}), 201)
-			
-		return make_response(jsonify({"success":"Exists"}), 200)
+		try:
+			mycursor.execute("SELECT * FROM `twitter` WHERE t_username = '{0}'".format(t_username))
+			myresult = mycursor.fetchall()
+			if len(myresult) == 0:
+				sql = "INSERT INTO twitter (`twit_id`, `proj_id`, `t_username`, `following`, `followers`, `description`, `last_tweet_id`, `last_popular_tweet_id`, `bday`) VALUES (NULL, %s, %s, %s, %s, %s, '0', '0', %s)"
+				mycursor.execute(sql, (proj_id, t_username, following, followers, desc, bday))
+				mydb.commit()
+				return make_response(jsonify({"success":bool(mycursor.rowcount)}), 201)
+				
+			return make_response(jsonify({"success":"Exists"}), 200)
+		except Exception as e:
+			return make_response(jsonify({"Error":e}), 400);
 
 
 class FindId(Resource):
