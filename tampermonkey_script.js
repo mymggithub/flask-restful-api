@@ -19,8 +19,45 @@ const ACTIVE_CHECK_TIME_X_DELAY = 60;
 var IS_ACTIVE = false;
 var ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 1;
 
+function get_username() {
+	var href_p = window.location.href.replace("https://twitter.com/","").split("/");
+	if(href_p.length > 0 && href_p[0] != "home" && href_p[0] != "notifications" && href_p[0] != "messages" && href_p[0] != "settings" && href_p[0] != "i"){
+		return href_p[0].replace(/[^a-z0-9áéíóúñü \.,_-]/gim,"");
+	}
+	return "";
+}
+
+function clean_int(sting_int) {
+	return parseInt(sting_int.replace(" Following", "").replace(" Followers", "").replace(",", "").replace("K", "000"));
+}
+
+function get_data() {
+	var following = 0;
+	if($('[href="/'+get_username()+'/following"]').length){
+		following = clean_int($('[href="/'+get_username()+'/following"]').text());
+	}else if($("span:contains('Following')").length){
+		following = clean_int($("span:contains('Following'):nth(0)").prev().text());
+	}
+	var followers = 0;
+	if($('[href="/'+get_username()+'/followers"]').length){
+		followers = clean_int($('[href="/'+get_username()+'/followers"]').text());
+	}else if($("span:contains('Followers')").length){
+		followers = clean_int($("span:contains('Followers'):nth(0)").prev().text());
+	}
+	var desc = "";
+	if($('[data-testid="UserDescription"]').length){
+		desc = $('[data-testid="UserDescription"]').text();//.replace(/[^a-z0-9áéíóúñü \.,_-]/gim,"")
+	}
+	var bday = "";
+	if($('[data-testid="UserBirthdate"]').length){
+		bday = $('[data-testid="UserBirthdate"]').text().replace("Born ", "");
+	}
+	return {"proj_id":2, "t_username":get_username(), "following":following, "followers":followers, "desc":desc, "bday":bday};
+}
+
 (function() {
-	'use strict';  
+	'use strict';
+	var oldHref = document.location.href;
 	var href_p = window.location.href.replace("https://twitter.com/","").split("/");
 
 
@@ -29,9 +66,7 @@ var ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 1;
 			var requestOnlineDetails = {
 				method: "GET",
 				url: "http://192.168.1.40:5000/online/",
-				headers: {
-					"Content-Type": "application/json"
-				},
+				headers: { "Content-Type": "application/json" },
 				onload: function(response) {
 					if (JSON.parse(response.responseText)['status'] != undefined && JSON.parse(response.responseText)['status'] == true) {
 						if (!IS_ACTIVE) { showMsg("Now Online"); }
@@ -44,7 +79,7 @@ var ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 1;
 						$(".is_online").addClass("not_active");
 						IS_ACTIVE = false;
 						ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 1;
-						$(".set_check").text(1)
+						$(".set_check").text("01")
 					}
 				},
 				onerror: function(response) {
@@ -53,13 +88,13 @@ var ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 1;
 						$(".is_online").addClass("not_active");
 						IS_ACTIVE = false;
 						ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 0;
-						$(".set_check").text(1)
+						$(".set_check").text("01")
 				}
 			}
 			GM_xmlhttpRequest(requestOnlineDetails);
 			// console.log("check");
 		}
-		$(".check_counter").text(ACTIVE_CHECK_TIME_X_DELAY_COUNTER)
+		$(".check_counter").text(String(ACTIVE_CHECK_TIME_X_DELAY_COUNTER).padStart(2, '0'))
 		ACTIVE_CHECK_TIME_X_DELAY_COUNTER += 1;
 		if (ACTIVE_CHECK_TIME_X_DELAY_COUNTER > ACTIVE_CHECK_TIME_X_DELAY) {ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 1;}
 		// console.log(IS_ACTIVE);
@@ -68,14 +103,18 @@ var ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 1;
 	function loadUI() {
 		const myCss = GM_getResourceText('REMOTE_CSS');
 		GM_addStyle(myCss);
-		GM_addStyle('.code-bar { width: 500px; background-color: #555; border-radius: 5px 0 0 5px; position: fixed; top: 20px; right: -480px; z-index: 999; transition: 1s; }');//overflow: auto;
-		GM_addStyle('.code-bar:hover { right: 0; }');
-		GM_addStyle('.code-bar a { float: left; width: 20%; text-align: center; padding: 12px 0; transition: all 0.3s ease; color: white; font-size: 36px; }');
+		GM_addStyle('.code-bar { width: 500px; background-color: #555; border-radius: 5px 0 0 5px; position: fixed; top: 50px; right: -480px; z-index: 999; transition: 2s; }');//overflow: auto;
+		GM_addStyle('.code-bar:hover, .pinned{ right: 0; }');
+		GM_addStyle('.code-bar a { border: 0px; float: left; width: 20%; text-align: center; padding: 12px 0; transition: all 0.3s ease; color: white; font-size: 36px; }');
 		GM_addStyle('.code-bar a:hover { background-color: #000;} .is_online { border-radius: 5px 0 0 5px; } .active { background-color: #04AA6D; } .not_active { background-color: red; } .paused, .pause_code:hover { background-color: aquamarine !important; }')
 
 
 		GM_addStyle('.tooltip { position: relative; display: inline-block; border-bottom: 2px dotted #ccc; color: #006080;}');
 		// GM_addStyle('.tooltip .tooltiptext { visibility: hidden; width: 120px; background-color: #555; color: #fff; text-align: center; border-radius: 6px; padding: 5px 0; position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -60px; opacity: 0; transition: opacity 0.3s; }');
+		GM_addStyle('.tooltip-top { bottom: 115%;left: 50%;margin-left: -60px; }');
+		GM_addStyle('.tooltip-top::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #555 transparent transparent transparent; }');
+		GM_addStyle('.tooltip-left { top: -5px; bottom:auto; right: 115% }');
+		GM_addStyle('.tooltip-left::after { content: ""; position: absolute; top: 50%; left: 100%; margin-top: -5px; border-width: 5px; border-style: solid; border-color: transparent transparent transparent #555; }');
 		GM_addStyle('.tooltip .tooltip-bottom { top: 115%; left: 50%; margin-left: -60px;}');
 		GM_addStyle('.tooltip-bottom::after { content: ""; position: absolute; bottom: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: transparent transparent #555 transparent;}');
 		GM_addStyle('.tooltip .tooltiptext { font-size: 20px; visibility: hidden; position: absolute; width: 120px; background-color: #555; color: #fff; text-align: center; padding: 5px 0; border-radius: 6px; z-index: 1; opacity: 0; transition: opacity 0.3s;}');
@@ -89,92 +128,134 @@ var ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 1;
 		GM_addStyle('@-webkit-keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }');
 		GM_addStyle('@keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }');
 
-		var myui = $('<div>',{"class":"code-bar"})
-		.append($('<a>',{"href":"#", "class":"is_online not_active tooltip"}).html($('<img alt="🚦" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/1f6a6.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-bottom">Is Online - Ping in (<span class="check_counter">0</span>/<span class="set_check">0</span>)</span>')))
-		.append($('<a>',{"href":"#", "class":"pause_code tooltip"}).html($('<img alt="⏯" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/23ef.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-bottom">Pause</span>')))
-		.append($('<a>',{"href":"#", "class":"update_code tooltip"}).html($('<img alt="🔄" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/1f504.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-bottom">Force Update</span>')))
-		.append($('<a>',{"href":"#", "class":"view_code tooltip"}).html($('<img alt="💾" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/1f4be.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-bottom">View</span>')))
-		.append($('<a>',{"href":"#", "class":"del_code tooltip"}).html($('<img alt="🗑️" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/1f5d1.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-bottom">Delete</span>')))
+
+		GM_addStyle('.modal-content { position: relative; background-color: #fefefe; margin: auto; padding: 0; border: 1px solid #888; width: 80%; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19); -webkit-animation-name: animatetop; -webkit-animation-duration: 0.4s; animation-name: animatetop; animation-duration: 0.4s}');
+		GM_addStyle('.modal { display: none; position: fixed; z-index: 1; padding-top: 200px; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgb(0,0,0); background-color: rgba(0,0,0,0.4); }');
+		GM_addStyle('@-webkit-keyframes animatetop { from {top:-300px; opacity:0} to {top:0; opacity:1} }');
+		GM_addStyle('@keyframes animatetop { from {top:-300px; opacity:0} to {top:0; opacity:1} }');
+		GM_addStyle('.close { color: white; float: right; font-size: 28px; font-weight: bold; }');
+		GM_addStyle('.close:hover, .close:focus { color: #000; text-decoration: none; cursor: pointer; }');
+		GM_addStyle('.modal-header { padding: 2px 16px; background-color: #5cb85c; color: white; }');
+		GM_addStyle('.modal-body {padding: 2px 16px;}');
+		GM_addStyle('.modal-footer { padding: 2px 16px; background-color: #5cb85c; color: white; }');
+
+
+		GM_addStyle('.pin { background-color: #555; color: white; text-decoration: none; display: inline-block; border-radius: 2px; }');
+		GM_addStyle('.pin .badge { position: absolute; top: -10px; left: -10px; padding: 5px 10px; border-radius: 50%; background-color: black; color: white; }');
+
+		var myui = $('<div>',{"class":"code-bar pin"})
+		.append($('<a>',{"href":"#", "class":"is_online not_active tooltip"}).html($('<img alt="🚦" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/1f6a6.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-left">Is Online - Ping in (<span class="check_counter">0</span>/<span class="set_check">0</span>)</span>')))
+		.append($('<a>',{"href":"#", "class":"pause_code tooltip"}).html($('<img alt="⏯" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/23ef.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-top">Pause</span>')))
+		.append($('<a>',{"href":"#", "class":"update_code tooltip"}).html($('<img alt="🔄" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/1f504.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-top">Force Update</span>')))
+		.append($('<a>',{"href":"#", "class":"view_code tooltip"}).html($('<img alt="💾" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/1f4be.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-top">View</span>')))
+		.append($('<a>',{"href":"#", "class":"del_code tooltip"}).html($('<img alt="🗑️" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/1f5d1.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-top">Delete</span>')))
+		.append($('<span>',{"class":"badge"}).text("+"))
+		
+		var mymodal = $('<div>',{"id":"myModal", "class":"modal"})
+		.append(
+			$('<div>',{"class":"modal-content"})
+			.append(
+				$('<div>',{"class":"modal-header"}).append('<span class="close">&times;</span><p>View</p>')
+			).append(
+				$('<div>',{"class":"modal-body"}).append('<p>Some text in the Modal Body</p>')
+			)
+		);
+
 		if(!$(".code-bar").length){
 			$("body").prepend(myui);
 			$("body").append('<div id="snackbar">Some text some message..</div>');
+			$("body").append(mymodal);
 		}
 	}
 
 	function showMsg(msg) {
-		$("#snackbar").text(msg)
+		$("#snackbar").text(msg);
 		$("#snackbar").addClass("show");
 		setTimeout(function(){ $("#snackbar").removeClass("show"); }, 3000);
 	}
-	function track_profile() {
-		var following = 0;
-		if($('[href="/'+href_p[0]+'/following"]').length){
-			following = parseInt($('[href="/'+href_p[0]+'/following"]').text().replace(" Following", "").replace(",", "").replace("K", "000"));
-		}else if($("span:contains('Following')").length){
-			following = parseInt($("span:contains('Following'):nth(0)").prev().text().replace(" Following", "").replace(",", "").replace("K", "000"));
-		}
-		var followers = 0;
-		if($('[href="/'+href_p[0]+'/followers"]').length){
-			followers = parseInt($('[href="/'+href_p[0]+'/followers"]').text().replace(" Followers", "").replace(",", "").replace("K", "000"));
-		}else if($("span:contains('Followers')").length){
-			followers = parseInt($("span:contains('Followers'):nth(0)").prev().text().replace(" Following", "").replace(",", "").replace("K", "000"));
-		}
-		var desc = "";
-		if($('[data-testid="UserDescription"]').length){
-			desc = $('[data-testid="UserDescription"]').text().replace(/[^a-z0-9áéíóúñü \.,_-]/gim,"");
-		}
-		var bday = "";
-		if($('[data-testid="UserBirthdate"]').length){
-			bday = $('[data-testid="UserBirthdate"]').text().replace("Born ", "");
-		}
-		var tmp_data = {"proj_id":2, "t_username":href_p[0], "following":following, "followers":followers, "desc":desc, "bday":bday}
-		// console.log(tmp_data)
+	function create_user() {
+		var tmp_data = get_data();
+		tmp_data["proj_id"] = 2;
+		// console.log(tmp_data);
 		var requestDetails = {
 			method: "POST",
 			url: "http://192.168.1.40:5000/",
 			data: JSON.stringify(tmp_data),
-			headers: {
-				"Content-Type": "application/json"
-			},
+			headers: { "Content-Type": "application/json" },
 			onload: function(response) {
-				console.log(response.responseText);
+				var r = JSON.parse(response.responseText);
+				showMsg(r['msg']);
 			}
-		}
-
-		// console.log(requestDetails);
+		};
 		GM_xmlhttpRequest(requestDetails);
 	};
-	function track_look_at_followers() {
+	function deleteUsername() {
 		var requestDetails = {
 			method: "GET",
-			url: "http://192.168.1.40:5000/",
-			data: `{"proj_id":"2", "t_username":"hi", "following":"100", "followers":"5", "desc":""}`,
-			headers: {
-				"Content-Type": "application/json"
-			},
+			url: "http://192.168.1.40:5000/del_user/"+get_username(),
+			headers: { "Content-Type": "application/json" },
 			onload: function(response) {
-				console.log(response.responseText);
-			}
-		}
-
-		// console.log(requestDetails);
+				var r = JSON.parse(response.responseText);
+				showMsg(r['msg']);
+			},
+			onerror: function(response) { console.log(response.responseText); }
+		};
 		GM_xmlhttpRequest(requestDetails);
 	};
 
-	function track() {
-		if(href_p.length == 1 && href_p[0] != "home"){
-			waitForKeyElements (
-				"span:contains('Following'):nth(0)", track_profile
-			);
-		}else if(href_p[1] == "followers"){
-			track_look_at_followers();
-		}
+
+	function update_user() {
+		var tmp_data = get_data()
+		var requestDetails = {
+			method: "POST",
+			url: "http://192.168.1.40:5000/update_user/"+get_username(),
+			data: JSON.stringify(tmp_data),
+			headers: { "Content-Type": "application/json" },
+			onload: function(response) {
+				var r = JSON.parse(response.responseText);
+				showMsg(r['msg']);
+			}
+		};
+		GM_xmlhttpRequest(requestDetails);
+	};
+
+	function getUser() {
+		var requestDetails = {
+			method: "GET",
+			url: "http://192.168.1.40:5000/find_user/"+get_username(),
+			headers: { "Content-Type": "application/json" },
+			onload: function(response) {
+				var r = JSON.parse(response.responseText);
+				$(".modal-body p").text(response.responseText)
+			}
+		};
+		GM_xmlhttpRequest(requestDetails);
 	}
+	function track_look_at_followers() {
+		// var requestDetails = {
+		// 	method: "GET",
+		// 	url: "http://192.168.1.40:5000/",
+		// 	headers: { "Content-Type": "application/json" },
+		// 	onload: function(response) {
+		// 		console.log(response.responseText);
+		// 	}
+		// };
+		// GM_xmlhttpRequest(requestDetails);
+	};
+
+
 	loadUI();
 	const isOnlineInterval = setInterval(online_check, CHECK_TIME);
 	function StopFunction() {clearInterval(isOnlineInterval);}
-	track();
-
+	function track() {
+		if(href_p.length == 1 && get_username()){
+			waitForKeyElements (
+				"span:contains('Following'):nth(0)", create_user
+			);
+		}else if(href_p[1] == "followers"){
+			// track_look_at_followers();
+		}
+	}
 	$(".pause_code").click(function (e) {
 		e.preventDefault();
 		if ($(".pause_code.paused").length) {
@@ -188,16 +269,64 @@ var ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 1;
 		ACTIVE_CHECK_TIME_X_DELAY_COUNTER = ACTIVE_CHECK_TIME_X_DELAY;
 		online_check();
 	});
+	$(".update_code").click(function (e) {
+		e.preventDefault();
+		create_user();
+	});
 	$(".update_code").dblclick(function (e) {
 		e.preventDefault();
+		update_user();
 	});
-	$(".view_code").dblclick(function (e) {
+	$(".view_code").click(function (e) {
 		e.preventDefault();
+		getUser();
+		$("#myModal").css("display","block")
 	});
-	$(".del_code").dblclick(function (e) {
+	$(".close").click(function (e) {
 		e.preventDefault();
+		$("#myModal").css("display","none")
+	});
+	$(".pin .badge").click(function (e) {
+		e.preventDefault();
+		if ($(".code-bar").hasClass("pinned")) {
+			$(".code-bar").removeClass("pinned");
+		}else {
+			$(".code-bar").addClass("pinned");
+		}
+	});
+	var modal = document.getElementById("myModal");
+	window.onclick = function(event) {
+		if (event.target == modal) {
+			modal.style.display = "none";
+		}
+		if (oldHref != document.location.href) {
+			oldHref = document.location.href;
+			track();
+			return true;
+		}
+	}
+	document.onclick = function(event) {
+		if (oldHref != document.location.href) {
+			oldHref = document.location.href;
+			track();
+			return true;
+		}
+		console.log("clicked")
+	}
+	window.onscroll = function(){
+		if (oldHref != document.location.href) {
+			oldHref = document.location.href;
+			track();
+			return true;
+		}
+		console.log("scroll")
+	};
+	$(".del_code").click(function (e) {
+		e.preventDefault();
+		deleteUsername();
 	});
 
+	track();
 	// Track pages that don't really reload, but refresh the entire content (like youtube).
 	var mutationObserver = new MutationObserver(function(mutations) {
 		mutations.forEach(function(mutation) {
@@ -208,7 +337,4 @@ var ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 1;
 			}
 		});
 	});
-
-
 })();
-
