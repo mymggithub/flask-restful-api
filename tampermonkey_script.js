@@ -72,11 +72,13 @@ function get_data() {
 						if (!IS_ACTIVE) { showMsg("Now Online"); }
 						$(".is_online").removeClass("not_active");
 						$(".is_online").addClass("active");
+                        $(".code-bar").addClass("online-code-bar");
 						IS_ACTIVE = true;
 						$(".set_check").text(ACTIVE_CHECK_TIME_X_DELAY)
 					}else{
 						$(".is_online").removeClass("active");
 						$(".is_online").addClass("not_active");
+                        $(".code-bar").removeClass("online-code-bar");
 						IS_ACTIVE = false;
 						ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 1;
 						$(".set_check").text("01")
@@ -103,10 +105,10 @@ function get_data() {
 	function loadUI() {
 		const myCss = GM_getResourceText('REMOTE_CSS');
 		GM_addStyle(myCss);
-		GM_addStyle('.code-bar { width: 500px; background-color: #555; border-radius: 5px 0 0 5px; position: fixed; top: 50px; right: -480px; z-index: 999; transition: 2s; }');//overflow: auto;
-		GM_addStyle('.code-bar:hover, .pinned{ right: 0; }');
+		GM_addStyle('.code-bar { background: linear-gradient(145deg, #4d4d4d, #5b5b5b); box-shadow: 9px 9px 18px #313131, -9px -9px 18px #797979; width: 500px; border-radius: 5px 0 0 5px !important; position: fixed; top: 50px; right: -480px; z-index: 999; transition: 2s; }');//overflow: auto;
+		GM_addStyle('.online-code-bar:hover, .pinned{ right: 0; }');
 		GM_addStyle('.code-bar a { border: 0px; float: left; width: 20%; text-align: center; padding: 12px 0; transition: all 0.3s ease; color: white; font-size: 36px; }');
-		GM_addStyle('.code-bar a:hover { background-color: #000;} .is_online { border-radius: 5px 0 0 5px; } .active { background-color: #04AA6D; } .not_active { background-color: red; } .paused, .pause_code:hover { background-color: aquamarine !important; }')
+		GM_addStyle('.code-bar a:hover { box-shadow: 20px 20px 60px #9a9a9a, -20px -20px 60px #d0d0d0; /* background: linear-gradient(145deg, #c2c2c2, #a3a3a3); */ } .is_online { border-radius: 5px 0 0 5px; } .active { background-color: #04AA6D; } .not_active { background: linear-gradient(145deg, #ff0000, #e60000) !important; } .paused, .pause_code:hover { background: linear-gradient(145deg, #53ebef, #46c6c9) !important; }')
 
 
 		GM_addStyle('.tooltip { position: relative; display: inline-block; border-bottom: 2px dotted #ccc; color: #006080;}');
@@ -150,7 +152,7 @@ function get_data() {
 		.append($('<a>',{"href":"#", "class":"view_code tooltip"}).html($('<img alt="💾" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/1f4be.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-top">View</span>')))
 		.append($('<a>',{"href":"#", "class":"del_code tooltip"}).html($('<img alt="🗑️" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/1f5d1.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-top">Delete</span>')))
 		.append($('<span>',{"class":"badge"}).text("+"))
-		
+
 		var mymodal = $('<div>',{"id":"myModal", "class":"modal"})
 		.append(
 			$('<div>',{"class":"modal-content"})
