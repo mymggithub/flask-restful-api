@@ -15,3 +15,6 @@ log.setLevel(logging.ERROR);
 
 
 python-is-python3
+
+
+/usr/bin/vmhgfs-fuse .host:/ /mnt/hgfs -o subtype=vmhgfs-fuse,allow_other
