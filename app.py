@@ -167,6 +167,3 @@ api.add_resource(UpdateUsername, '/update_user/<string:t_username>');
 
 if __name__ == "__main__":
 	app.run(debug=True, host='0.0.0.0');
-
-# {"proj_id":"1", "account":"hi", "following":"100", "followers":"5"}
-# https://gist.github.com/Jan-Zeiseweis/d45a7206590d1f3577a51dae9517275e
