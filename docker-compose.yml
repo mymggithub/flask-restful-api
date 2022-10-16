@@ -8,7 +8,7 @@ services:
     command: --default-authentication-plugin=mysql_native_password
     restart: always
     ports:
-      - 3306:3306
+      - 3308:3306
     environment:
       MYSQL_ROOT_PASSWORD: pass123word
     networks:
@@ -21,7 +21,10 @@ services:
       - 9001:80
     environment:
       PMA_ARBITRARY: 1
+      PMA_PORT: 3306
       PMA_HOST: mysql_db
+      PMA_USER: root
+      PMA_PASSWORD: pass123word
     depends_on:
       - mysql_db
     networks:
