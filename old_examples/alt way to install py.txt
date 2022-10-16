@@ -1,0 +1,95 @@
+
+
+
+playwright install
+playwright install-deps
+
+
+
+https://fostips.com/install-python-3-10-debian-11/
+
+sudo apt update
+
+sudo apt install wget build-essential libreadline-dev libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev
+
+wget -c https://www.python.org/ftp/python/3.10.7/Python-3.10.7.tar.xz
+
+
+tar -Jxvf Python-3.10.7.tar.xz
+
+
+cd Python-3.10.7
+
+
+./configure --enable-optimizations
+
+
+sudo make altinstall
+
+
+
+python3.10 --version
+pip3.10 --version
+
+
+
+
+
+
+sudo update-alternatives --install /usr/bin/python python /usr/local/bin/python3.10 1
+
+sudo update-alternatives --install /usr/bin/pip pip /usr/local/bin/pip3.10 1
+
+
+
+
+
+
+
+
+
+
+https://stackoverflow.com/questions/44602191/how-to-completely-uninstall-python-2-7-13-on-ubuntu-16-04
+
+whereis python
+which python
+
+
+sudo apt autoremove python
+
+
+
+
+
+https://github.com/microsoft/playwright/issues/12859
+
+
+
+
+
+
+
+
+
+
+https://superuser.com/questions/221340/set-password-for-root-on-virtualbox-ubuntu
+
+sudo -i
+To enable the root account, open a terminal and run the following to set a root password:
+
+sudo passwd root
+
+
+
+
+
+
+
+
+
+
+https://medium.com/@LewisMenelaws/how-to-create-beautiful-svg-animations-easily-610eb2690ac3
+
+
+
+https://greensock.com/ease-visualizer

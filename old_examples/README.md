@@ -27,3 +27,7 @@ sudo apt-get install open-vm-tools
 
 
 docker-compose up
+
+
+docker build -t flask-api .
+docker run -p 5000:5000 --name flack-api-c -it flask-api
