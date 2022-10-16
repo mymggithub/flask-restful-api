@@ -22,7 +22,7 @@ var ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 1;
 
 function get_username() {
 	var href_p = window.location.href.replace("https://twitter.com/","").split("/");
-	if(href_p.length > 0 && href_p[0] != "home" && href_p[0] != "notifications" && href_p[0] != "messages" && href_p[0] != "settings" && href_p[0] != "i"){
+	if(href_p.length > 0 && (href_p[0] != "home" && href_p[0] != "notifications" && href_p[0] != "messages" && href_p[0] != "settings" && href_p[0] != "i")){
 		return href_p[0].replace(/[^a-z0-9áéíóúñü \.,_-]/gim,"");
 	}
 	return "";
@@ -56,205 +56,226 @@ function get_data() {
 	return {"proj_id":2, "t_username":get_username(), "following":following, "followers":followers, "desc":desc, "bday":bday};
 }
 
-(function() {
-	'use strict';
-	var oldHref = document.location.href;
-	var href_p = window.location.href.replace("https://twitter.com/","").split("/");
 
-
-	function online_check() {
-		if(!IS_ACTIVE || (ACTIVE_CHECK_TIME_X_DELAY_COUNTER == ACTIVE_CHECK_TIME_X_DELAY)){
-			var requestOnlineDetails = {
-				method: "GET",
-				url: REMOTE_API+"/online/",
-				headers: { "Content-Type": "application/json" },
-				onload: function(response) {
-					if (JSON.parse(response.responseText)['status'] != undefined && JSON.parse(response.responseText)['status'] == true) {
-						if (!IS_ACTIVE) { showMsg("Now Online"); }
-						$(".is_online").removeClass("not_active");
-						$(".is_online").addClass("active");
-                        $(".code-bar").addClass("online-code-bar");
-						IS_ACTIVE = true;
-						$(".set_check").text(ACTIVE_CHECK_TIME_X_DELAY)
-					}else{
-						$(".is_online").removeClass("active");
-						$(".is_online").addClass("not_active");
-                        $(".code-bar").removeClass("online-code-bar");
-						IS_ACTIVE = false;
-						ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 1;
-						$(".set_check").text("01")
-					}
-				},
-				onerror: function(response) {
-						if (IS_ACTIVE) { showMsg("Offline"); }
-						$(".is_online").removeClass("active");
-						$(".is_online").addClass("not_active");
-						IS_ACTIVE = false;
-						ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 0;
-						$(".set_check").text("01")
+function online_check() {
+	if(!IS_ACTIVE || (ACTIVE_CHECK_TIME_X_DELAY_COUNTER == ACTIVE_CHECK_TIME_X_DELAY)){
+		var requestOnlineDetails = {
+			method: "GET",
+			url: REMOTE_API+"/online/",
+			headers: { "Content-Type": "application/json" },
+			onload: function(response) {
+				var r = JSON.parse(response.responseText);
+				if (r['status'] != undefined &&  r['status']) {
+					if (!IS_ACTIVE) { showMsg("Now Online"); }
+					$(".is_online").removeClass("not_active");
+					$(".is_online").addClass("active");
+                    $(".code-bar").addClass("online-code-bar");
+					IS_ACTIVE = true;
+					$(".set_check").text(ACTIVE_CHECK_TIME_X_DELAY)
+				}else{
+					$(".is_online").removeClass("active");
+					$(".is_online").addClass("not_active");
+                    $(".code-bar").removeClass("online-code-bar");
+					IS_ACTIVE = false;
+					ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 1;
+					$(".set_check").text("01")
 				}
+				var requestSettings = {
+					method: "GET",
+					url: REMOTE_API+"/settings/",
+					headers: { "Content-Type": "application/json" },
+					onload: function(response) {
+						var r = JSON.parse(response.responseText);
+						if (r["data"]["paused"] == 1) {
+							$(".pause_code").addClass("paused");
+						}else{
+							$(".pause_code").removeClass("paused");
+						}
+					}
+				};
+				GM_xmlhttpRequest(requestSettings);
+			},
+			onerror: function(response) {
+					if (IS_ACTIVE) { showMsg("Offline"); }
+					$(".is_online").removeClass("active");
+					$(".is_online").addClass("not_active");
+					IS_ACTIVE = false;
+					ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 0;
+					$(".set_check").text("01")
 			}
-			GM_xmlhttpRequest(requestOnlineDetails);
-			// console.log("check");
 		}
-		$(".check_counter").text(String(ACTIVE_CHECK_TIME_X_DELAY_COUNTER).padStart(2, '0'))
-		ACTIVE_CHECK_TIME_X_DELAY_COUNTER += 1;
-		if (ACTIVE_CHECK_TIME_X_DELAY_COUNTER > ACTIVE_CHECK_TIME_X_DELAY) {ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 1;}
-		// console.log(IS_ACTIVE);
+		GM_xmlhttpRequest(requestOnlineDetails);
+		// console.log("check");
 	}
+	$(".check_counter").text(String(ACTIVE_CHECK_TIME_X_DELAY_COUNTER).padStart(2, '0'))
+	ACTIVE_CHECK_TIME_X_DELAY_COUNTER += 1;
+	if (ACTIVE_CHECK_TIME_X_DELAY_COUNTER > ACTIVE_CHECK_TIME_X_DELAY) {ACTIVE_CHECK_TIME_X_DELAY_COUNTER = 1;}
+	// console.log(IS_ACTIVE);
+}
 
-	function loadUI() {
-		const myCss = GM_getResourceText('REMOTE_CSS');
-		GM_addStyle(myCss);
-		GM_addStyle('.code-bar { background: linear-gradient(145deg, #4d4d4d, #5b5b5b); box-shadow: 9px 9px 18px #313131, -9px -9px 18px #797979; width: 500px; border-radius: 5px 0 0 5px !important; position: fixed; top: 50px; right: -480px; z-index: 999; transition: 2s; }');//overflow: auto;
-		GM_addStyle('.online-code-bar:hover, .pinned{ right: 0; }');
-		GM_addStyle('.code-bar a { border: 0px; float: left; width: 20%; text-align: center; padding: 12px 0; transition: all 0.3s ease; color: white; font-size: 36px; }');
-		GM_addStyle('.code-bar a:hover { box-shadow: 20px 20px 60px #9a9a9a, -20px -20px 60px #d0d0d0; /* background: linear-gradient(145deg, #c2c2c2, #a3a3a3); */ } .is_online { border-radius: 5px 0 0 5px; } .active { background-color: #04AA6D; } .not_active { background: linear-gradient(145deg, #ff0000, #e60000) !important; } .paused, .pause_code:hover { background: linear-gradient(145deg, #53ebef, #46c6c9) !important; }')
-
-
-		GM_addStyle('.tooltip { position: relative; display: inline-block; border-bottom: 2px dotted #ccc; color: #006080;}');
-		// GM_addStyle('.tooltip .tooltiptext { visibility: hidden; width: 120px; background-color: #555; color: #fff; text-align: center; border-radius: 6px; padding: 5px 0; position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -60px; opacity: 0; transition: opacity 0.3s; }');
-		GM_addStyle('.tooltip-top { bottom: 115%;left: 50%;margin-left: -60px; }');
-		GM_addStyle('.tooltip-top::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #555 transparent transparent transparent; }');
-		GM_addStyle('.tooltip-left { top: -5px; bottom:auto; right: 115% }');
-		GM_addStyle('.tooltip-left::after { content: ""; position: absolute; top: 50%; left: 100%; margin-top: -5px; border-width: 5px; border-style: solid; border-color: transparent transparent transparent #555; }');
-		GM_addStyle('.tooltip .tooltip-bottom { top: 115%; left: 50%; margin-left: -60px;}');
-		GM_addStyle('.tooltip-bottom::after { content: ""; position: absolute; bottom: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: transparent transparent #555 transparent;}');
-		GM_addStyle('.tooltip .tooltiptext { font-size: 20px; visibility: hidden; position: absolute; width: 120px; background-color: #555; color: #fff; text-align: center; padding: 5px 0; border-radius: 6px; z-index: 1; opacity: 0; transition: opacity 0.3s;}');
-		GM_addStyle('.tooltip:hover .tooltiptext { visibility: visible; opacity: 1;}')
+function loadUI() {
+	const myCss = GM_getResourceText('REMOTE_CSS');
+	GM_addStyle(myCss);
+	GM_addStyle('.code-bar { background: linear-gradient(145deg, #4d4d4d, #5b5b5b); box-shadow: 9px 9px 18px #313131, -9px -9px 18px #797979; width: 500px; border-radius: 5px 0 0 5px !important; position: fixed; top: 50px; right: -480px; z-index: 999; transition: 2s; }');//overflow: auto;
+	GM_addStyle('.online-code-bar:hover, .pinned{ right: 0; }');
+	GM_addStyle('.code-bar a { border: 0px; float: left; width: 20%; text-align: center; padding: 12px 0; transition: all 0.3s ease; color: white; font-size: 36px; }');
+	GM_addStyle('.code-bar a:hover { box-shadow: 20px 20px 60px #9a9a9a, -20px -20px 60px #d0d0d0; /* background: linear-gradient(145deg, #c2c2c2, #a3a3a3); */ } .is_online { border-radius: 5px 0 0 5px; } .active { background-color: #04AA6D; } .not_active { background: linear-gradient(145deg, #ff0000, #e60000) !important; } .paused, .pause_code:hover { background: linear-gradient(145deg, #53ebef, #46c6c9) !important; }')
 
 
-		GM_addStyle('#snackbar { visibility: hidden; min-width: 250px; margin-left: -125px; background-color: #333; color: #fff; text-align: center; border-radius: 2px; padding: 16px; position: fixed; z-index: 9999; left: 50%; bottom: 30px; font-size: 17px; }');
-		GM_addStyle('#snackbar.show { visibility: visible; -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s; animation: fadein 0.5s, fadeout 0.5s 2.5s; }');
-		GM_addStyle('@-webkit-keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }');
-		GM_addStyle('@keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }');
-		GM_addStyle('@-webkit-keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }');
-		GM_addStyle('@keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }');
+	GM_addStyle('.tooltip { position: relative; display: inline-block; border-bottom: 2px dotted #ccc; color: #006080;}');
+	// GM_addStyle('.tooltip .tooltiptext { visibility: hidden; width: 120px; background-color: #555; color: #fff; text-align: center; border-radius: 6px; padding: 5px 0; position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -60px; opacity: 0; transition: opacity 0.3s; }');
+	GM_addStyle('.tooltip-top { bottom: 115%;left: 50%;margin-left: -60px; }');
+	GM_addStyle('.tooltip-top::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #555 transparent transparent transparent; }');
+	GM_addStyle('.tooltip-left { top: -5px; bottom:auto; right: 115% }');
+	GM_addStyle('.tooltip-left::after { content: ""; position: absolute; top: 50%; left: 100%; margin-top: -5px; border-width: 5px; border-style: solid; border-color: transparent transparent transparent #555; }');
+	GM_addStyle('.tooltip .tooltip-bottom { top: 115%; left: 50%; margin-left: -60px;}');
+	GM_addStyle('.tooltip-bottom::after { content: ""; position: absolute; bottom: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: transparent transparent #555 transparent;}');
+	GM_addStyle('.tooltip .tooltiptext { font-size: 20px; visibility: hidden; position: absolute; width: 120px; background-color: #555; color: #fff; text-align: center; padding: 5px 0; border-radius: 6px; z-index: 1; opacity: 0; transition: opacity 0.3s;}');
+	GM_addStyle('.tooltip:hover .tooltiptext { visibility: visible; opacity: 1;}')
 
 
-		GM_addStyle('.modal-content { position: relative; background-color: #fefefe; margin: auto; padding: 0; border: 1px solid #888; width: 80%; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19); -webkit-animation-name: animatetop; -webkit-animation-duration: 0.4s; animation-name: animatetop; animation-duration: 0.4s}');
-		GM_addStyle('.modal { display: none; position: fixed; z-index: 1; padding-top: 200px; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgb(0,0,0); background-color: rgba(0,0,0,0.4); }');
-		GM_addStyle('@-webkit-keyframes animatetop { from {top:-300px; opacity:0} to {top:0; opacity:1} }');
-		GM_addStyle('@keyframes animatetop { from {top:-300px; opacity:0} to {top:0; opacity:1} }');
-		GM_addStyle('.close { color: white; float: right; font-size: 28px; font-weight: bold; }');
-		GM_addStyle('.close:hover, .close:focus { color: #000; text-decoration: none; cursor: pointer; }');
-		GM_addStyle('.modal-header { padding: 2px 16px; background-color: #5cb85c; color: white; }');
-		GM_addStyle('.modal-body {padding: 2px 16px;}');
-		GM_addStyle('.modal-footer { padding: 2px 16px; background-color: #5cb85c; color: white; }');
+	GM_addStyle('#snackbar { visibility: hidden; min-width: 250px; margin-left: -125px; background-color: #333; color: #fff; text-align: center; border-radius: 2px; padding: 16px; position: fixed; z-index: 9999; left: 50%; bottom: 30px; font-size: 17px; }');
+	GM_addStyle('#snackbar.show { visibility: visible; -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s; animation: fadein 0.5s, fadeout 0.5s 2.5s; }');
+	GM_addStyle('@-webkit-keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }');
+	GM_addStyle('@keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }');
+	GM_addStyle('@-webkit-keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }');
+	GM_addStyle('@keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }');
 
 
-		GM_addStyle('.pin { background-color: #555; color: white; text-decoration: none; display: inline-block; border-radius: 2px; }');
-		GM_addStyle('.pin .badge { position: absolute; top: -10px; left: -10px; padding: 5px 10px; border-radius: 50%; background-color: black; color: white; }');
+	GM_addStyle('.modal-content { position: relative; background-color: #fefefe; margin: auto; padding: 0; border: 1px solid #888; width: 80%; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19); -webkit-animation-name: animatetop; -webkit-animation-duration: 0.4s; animation-name: animatetop; animation-duration: 0.4s}');
+	GM_addStyle('.modal { display: none; position: fixed; z-index: 1; padding-top: 200px; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgb(0,0,0); background-color: rgba(0,0,0,0.4); }');
+	GM_addStyle('@-webkit-keyframes animatetop { from {top:-300px; opacity:0} to {top:0; opacity:1} }');
+	GM_addStyle('@keyframes animatetop { from {top:-300px; opacity:0} to {top:0; opacity:1} }');
+	GM_addStyle('.close { color: white; float: right; font-size: 28px; font-weight: bold; }');
+	GM_addStyle('.close:hover, .close:focus { color: #000; text-decoration: none; cursor: pointer; }');
+	GM_addStyle('.modal-header { padding: 2px 16px; background-color: #5cb85c; color: white; }');
+	GM_addStyle('.modal-body {padding: 2px 16px;}');
+	GM_addStyle('.modal-footer { padding: 2px 16px; background-color: #5cb85c; color: white; }');
 
-		var myui = $('<div>',{"class":"code-bar pin"})
-		.append($('<a>',{"href":"#", "class":"is_online not_active tooltip"}).html($('<img alt="🚦" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/1f6a6.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-left">Is Online - Ping in (<span class="check_counter">0</span>/<span class="set_check">0</span>)</span>')))
-		.append($('<a>',{"href":"#", "class":"pause_code tooltip"}).html($('<img alt="⏯" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/23ef.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-top">Pause</span>')))
-		.append($('<a>',{"href":"#", "class":"update_code tooltip"}).html($('<img alt="🔄" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/1f504.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-top">Force Update</span>')))
-		.append($('<a>',{"href":"#", "class":"view_code tooltip"}).html($('<img alt="💾" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/1f4be.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-top">View</span>')))
-		.append($('<a>',{"href":"#", "class":"del_code tooltip"}).html($('<img alt="🗑️" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/1f5d1.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-top">Delete</span>')))
-		.append($('<span>',{"class":"badge"}).text("+"))
 
-		var mymodal = $('<div>',{"id":"myModal", "class":"modal"})
+	GM_addStyle('.pin { background-color: #555; color: white; text-decoration: none; display: inline-block; border-radius: 2px; }');
+	GM_addStyle('.pin .badge { position: absolute; top: -10px; left: -10px; padding: 5px 10px; border-radius: 50%; background-color: black; color: white; }');
+
+	var myui = $('<div>',{"class":"code-bar pin"})
+	.append($('<a>',{"href":"#", "class":"is_online not_active tooltip"}).html($('<img alt="🚦" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/1f6a6.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-left">Is Online - Ping in (<span class="check_counter">0</span>/<span class="set_check">0</span>)</span>')))
+	.append($('<a>',{"href":"#", "class":"pause_code tooltip"}).html($('<img alt="⏯" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/23ef.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-top">Pause</span>')))
+	.append($('<a>',{"href":"#", "class":"update_code tooltip"}).html($('<img alt="🔄" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/1f504.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-top">Force Update</span>')))
+	.append($('<a>',{"href":"#", "class":"view_code tooltip"}).html($('<img alt="💾" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/1f4be.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-top">View</span>')))
+	.append($('<a>',{"href":"#", "class":"del_code tooltip"}).html($('<img alt="🗑️" draggable="false" src="https://abs-0.twimg.com/emoji/v2/svg/1f5d1.svg" class="r-4qtqp9 r-dflpy8 r-sjv1od r-zw8f10 r-10akycc r-h9hxbl"><span class="tooltiptext tooltip-top">Delete</span>')))
+	.append($('<span>',{"class":"badge"}).text("+"))
+
+	var mymodal = $('<div>',{"id":"myModal", "class":"modal"})
+	.append(
+		$('<div>',{"class":"modal-content"})
 		.append(
-			$('<div>',{"class":"modal-content"})
-			.append(
-				$('<div>',{"class":"modal-header"}).append('<span class="close">&times;</span><p>View</p>')
-			).append(
-				$('<div>',{"class":"modal-body"}).append('<p>Some text in the Modal Body</p>')
-			)
-		);
+			$('<div>',{"class":"modal-header"}).append('<span class="close">&times;</span><p>View</p>')
+		).append(
+			$('<div>',{"class":"modal-body"}).append('<p>Some text in the Modal Body</p>')
+		)
+	);
 
-		if(!$(".code-bar").length){
-			$("body").prepend(myui);
-			$("body").append('<div id="snackbar">Some text some message..</div>');
-			$("body").append(mymodal);
-		}
+	if(!$(".code-bar").length){
+		$("body").prepend(myui);
+		$("body").append('<div id="snackbar">Some text some message..</div>');
+		$("body").append(mymodal);
 	}
+}
 
-	function showMsg(msg) {
-		$("#snackbar").text(msg);
-		$("#snackbar").addClass("show");
-		setTimeout(function(){ $("#snackbar").removeClass("show"); }, 3000);
-	}
-	function create_user() {
+function showMsg(msg) {
+	$("#snackbar").text(msg);
+	$("#snackbar").addClass("show");
+	setTimeout(function(){ $("#snackbar").removeClass("show"); }, 3000);
+}
+function create_user() {
+	if (get_username() != "") {
 		var tmp_data = get_data();
 		tmp_data["proj_id"] = 2;
 		// console.log(tmp_data);
-		var requestDetails = {
+		var requestCreateUser = {
 			method: "POST",
 			url: REMOTE_API+"/",
 			data: JSON.stringify(tmp_data),
 			headers: { "Content-Type": "application/json" },
 			onload: function(response) {
 				var r = JSON.parse(response.responseText);
-				showMsg(r['msg']);
+				if(r){
+					showMsg(r['msg']);
+				}
 			}
 		};
-		GM_xmlhttpRequest(requestDetails);
-	};
-	function deleteUsername() {
-		var requestDetails = {
-			method: "GET",
-			url: REMOTE_API+"/del_user/"+get_username(),
-			headers: { "Content-Type": "application/json" },
-			onload: function(response) {
-				var r = JSON.parse(response.responseText);
-				showMsg(r['msg']);
-			},
-			onerror: function(response) { console.log(response.responseText); }
-		};
-		GM_xmlhttpRequest(requestDetails);
-	};
-
-
-	function update_user() {
-		var tmp_data = get_data()
-		var requestDetails = {
-			method: "POST",
-			url: REMOTE_API+"/update_user/"+get_username(),
-			data: JSON.stringify(tmp_data),
-			headers: { "Content-Type": "application/json" },
-			onload: function(response) {
-				var r = JSON.parse(response.responseText);
-				showMsg(r['msg']);
-			}
-		};
-		GM_xmlhttpRequest(requestDetails);
-	};
-
-	function getUser() {
-		var requestDetails = {
-			method: "GET",
-			url: REMOTE_API+"/find_user/"+get_username(),
-			headers: { "Content-Type": "application/json" },
-			onload: function(response) {
-				var r = JSON.parse(response.responseText);
-				$(".modal-body p").text(response.responseText)
-			}
-		};
-		GM_xmlhttpRequest(requestDetails);
+		GM_xmlhttpRequest(requestCreateUser);
 	}
-	function track_look_at_followers() {
-		// var requestDetails = {
-		// 	method: "GET",
-		// 	url: "http://192.168.1.40:5000/",
-		// 	headers: { "Content-Type": "application/json" },
-		// 	onload: function(response) {
-		// 		console.log(response.responseText);
-		// 	}
-		// };
-		// GM_xmlhttpRequest(requestDetails);
+};
+function deleteUsername() {
+	var requestDelUser = {
+		method: "GET",
+		url: REMOTE_API+"/del_user/"+get_username(),
+		headers: { "Content-Type": "application/json" },
+		onload: function(response) {
+			var r = JSON.parse(response.responseText);
+			showMsg(r['msg']);
+		},
+		onerror: function(response) { console.log(response.responseText); }
 	};
+	GM_xmlhttpRequest(requestDelUser);
+};
 
+
+function update_user() {
+	var tmp_data = get_data()
+	var requestUpdateUser = {
+		method: "POST",
+		url: REMOTE_API+"/update_user/"+get_username(),
+		data: JSON.stringify(tmp_data),
+		headers: { "Content-Type": "application/json" },
+		onload: function(response) {
+			var r = JSON.parse(response.responseText);
+			showMsg(r['msg']);
+		}
+	};
+	GM_xmlhttpRequest(requestUpdateUser);
+};
+
+
+function update_settings(tmp_data, callback_func) {
+	var requestSettings = {
+		method: "POST",
+		url: REMOTE_API+"/settings/",
+		data: JSON.stringify(tmp_data),
+		headers: { "Content-Type": "application/json" },
+		onload: function(response) {
+			var r = JSON.parse(response.responseText);
+			callback_func();
+			showMsg(r['msg']);
+		}
+	};
+	GM_xmlhttpRequest(requestSettings);
+};
+
+function getUser() {
+	var requestDetails = {
+		method: "GET",
+		url: REMOTE_API+"/find_user/"+get_username(),
+		headers: { "Content-Type": "application/json" },
+		onload: function(response) {
+			var r = JSON.parse(response.responseText);
+			$(".modal-body p").text(response.responseText)
+		}
+	};
+	GM_xmlhttpRequest(requestDetails);
+}
+
+(function() {
+	'use strict';
+	var oldHref = document.location.href;
+	var href_p = window.location.href.replace("https://twitter.com/","").split("/");
 
 	loadUI();
 	const isOnlineInterval = setInterval(online_check, CHECK_TIME);
 	function StopFunction() {clearInterval(isOnlineInterval);}
 	function track() {
-		if(href_p.length == 1 && get_username()){
-			waitForKeyElements (
-				"span:contains('Following'):nth(0)", create_user
-			);
+		if(href_p.length == 1 && get_username() != ""){
+			waitForKeyElements ( "span:contains('Following'):nth(0)", create_user );
 		}else if(href_p[1] == "followers"){
 			// track_look_at_followers();
 		}
@@ -262,9 +283,15 @@ function get_data() {
 	$(".pause_code").click(function (e) {
 		e.preventDefault();
 		if ($(".pause_code.paused").length) {
-			$(".pause_code").removeClass("paused");
+			update_settings({"pause":0}, function() {
+				$(".pause_code").removeClass("paused");
+			});
+			
 		}else{
-			$(".pause_code").addClass("paused");
+			update_settings({"pause":1}, function() {
+				$(".pause_code").addClass("paused");
+			});
+			
 		}
 	});
 	$(".is_online").dblclick(function (e) {
@@ -288,6 +315,10 @@ function get_data() {
 	$(".close").click(function (e) {
 		e.preventDefault();
 		$("#myModal").css("display","none")
+	});
+	$(".del_code").click(function (e) {
+		e.preventDefault();
+		deleteUsername();
 	});
 	$(".pin .badge").click(function (e) {
 		e.preventDefault();
@@ -314,7 +345,6 @@ function get_data() {
 			track();
 			return true;
 		}
-		console.log("clicked")
 	}
 	window.onscroll = function(){
 		if (oldHref != document.location.href) {
@@ -322,15 +352,9 @@ function get_data() {
 			track();
 			return true;
 		}
-		console.log("scroll")
 	};
-	$(".del_code").click(function (e) {
-		e.preventDefault();
-		deleteUsername();
-	});
 
 	track();
-	// Track pages that don't really reload, but refresh the entire content (like youtube).
 	var mutationObserver = new MutationObserver(function(mutations) {
 		mutations.forEach(function(mutation) {
 			if (oldHref != document.location.href) {

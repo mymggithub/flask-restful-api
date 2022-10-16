@@ -7,6 +7,8 @@ import logging
 import sys
 
 logging.basicConfig(filename="log/default.log");
+log = logging.getLogger('werkzeug');
+log.setLevel(logging.ERROR);
 
 DBconfig = {
 	"host":"mysql_db", 
@@ -30,7 +32,7 @@ class IsOnline(Resource):
 			logging.debug("-----{}::{}()-----".format(self.__class__.__name__,  sys._getframe().f_code.co_name));
 			logging.error(e);
 			logging.debug("-----{}::{}()-----".format(self.__class__.__name__,  sys._getframe().f_code.co_name));
-			return make_response(jsonify({ "success":False, "status":False }), 200);
+			return make_response(jsonify({ "success":False, "status":False, "error":e, "msg":"Error loading database" }), 200);
 
 		return make_response(jsonify({ "success":True, "status":True }), 200);
 
@@ -41,7 +43,7 @@ class TwitterHomeApi(Resource):
 		mycursor.execute("SELECT * FROM twitter");
 		myresult = mycursor.fetchall();
 		mydb.close();
-		json_data=[] ;
+		json_data=[];
 		for i,x in enumerate(myresult):
 			json_data.append([i,x]);
 		return make_response(jsonify({ "success":True, 'data':json_data }), 200);
@@ -55,6 +57,8 @@ class TwitterHomeApi(Resource):
 				proj_id = int(args["proj_id"]);
 			if "t_username" in args:
 				t_username = str(args["t_username"]);
+				if t_username.strip() == "":
+					return make_response(jsonify({ "success":False, "msg":"Blank Usernamse" }), 400);
 			if "following" in args:
 				following = int(args["following"]);
 			if "followers" in args:
@@ -80,9 +84,9 @@ class TwitterHomeApi(Resource):
 				sql_query = f"INSERT INTO twitter (`twit_id`, `proj_id`, `t_username`, `following`, `followers`, `description`, `last_tweet_id`, `last_popular_tweet_id`, `bday`) VALUES (NULL, %(proj_id)s, %(t_username)s, %(following)s, %(followers)s, %(description)s, '0', '0', %(bday)s)";
 				mycursor.execute(sql_query, {"proj_id": proj_id, "t_username": t_username, "following": following, "followers": followers, "description": desc, "bday": bday});
 				mydb.commit();
+				mydb.close();
 				return make_response(jsonify({ "success":bool(mycursor.rowcount), "msg":"Created" }), 201);
-			mydb.close();
-			make_response(jsonify({ "success":False, "msg":"Exists" }), 200);
+			return make_response(jsonify({ "success":False, "msg":"Exists" }), 200);
 		except Exception as e:
 			logging.debug("-----{}::{}()-----".format(self.__class__.__name__,  sys._getframe().f_code.co_name));
 			logging.info(sql_query);
@@ -158,11 +162,53 @@ class UpdateUsername(Resource):
 			return make_response(jsonify({ "success":True, "msg":"Updated" }), 201);
 		return make_response(jsonify({ "success":False, "msg":"Nothing to update" }), 200);#Nothing to updated | Failed to update
 
+
+
+class Settings(Resource):
+	def get(self):
+		mydb = mysql.connector.connect(**DBconfig);
+		mycursor = mydb.cursor(dictionary=True, buffered=True);
+		sql_query = "SELECT * FROM `settings`";
+		mycursor.execute(sql_query);
+		myresult = mycursor.fetchall();
+		mydb.close();
+		if len(myresult) > 0:
+			return make_response(jsonify({ "success":True, 'data':myresult[0] }), 200);
+
+
+	def post(self):
+		args = request.json;
+		pause = 0;
+		sql_query = "";
+		msg = "Updated";
+		try:
+			mydb = mysql.connector.connect(**DBconfig);
+			mycursor = mydb.cursor(dictionary=True, buffered=True);
+			if "pause" in args:
+				if int(args["pause"]) == 1:
+					sql_query = f"UPDATE `settings` SET `paused` = 1";
+					msg = "Paused";
+				else: 
+					sql_query = f"UPDATE `settings` SET `paused` = 0";
+					msg = "Unpaused";
+			mycursor.execute(sql_query);
+			mydb.commit();
+			mydb.close();
+		except Exception as e:
+			logging.debug("-----{}::{}()-----".format(self.__class__.__name__,  sys._getframe().f_code.co_name));
+			logging.info(sql_query);
+			logging.error(e);
+			logging.debug("-----{}::{}()-----".format(self.__class__.__name__,  sys._getframe().f_code.co_name));
+		if bool(mycursor.rowcount):
+			return make_response(jsonify({ "success":True, "msg":msg }), 201);
+		return make_response(jsonify({ "success":False, "msg":"Nothing to update" }), 200);
+
 api.add_resource(TwitterHomeApi, '/');
 api.add_resource(IsOnline, '/online/');
 api.add_resource(FindUsername, '/find_user/<string:t_username>');
 api.add_resource(DeleteUsername, '/del_user/<string:t_username>');
 api.add_resource(UpdateUsername, '/update_user/<string:t_username>');
+api.add_resource(Settings, '/settings/');
 
 
 if __name__ == "__main__":
