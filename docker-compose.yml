@@ -25,6 +25,7 @@ services:
       PMA_HOST: mysql_db
       PMA_USER: root
       PMA_PASSWORD: pass123word
+      UPLOAD_LIMIT: 100000000
     depends_on:
       - mysql_db
     networks:
