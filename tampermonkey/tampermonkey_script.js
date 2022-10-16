@@ -7,8 +7,8 @@
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js
 // @require        https://gist.github.com/raw/2625891/waitForKeyElements.js
 // @resource       REMOTE_CSS https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css
-// @downloadURL    https://raw.githubusercontent.com/mymggithub/flask-restful-api/main/tampermonkey/tampermonkey_script.js?token=GHSAT0AAAAAABZFDTGMYPYINZJHBELJGK3WY2MMTGA
-// @updateURL      https://raw.githubusercontent.com/mymggithub/flask-restful-api/main/tampermonkey/tampermonkey_script.js?token=GHSAT0AAAAAABZFDTGMYPYINZJHBELJGK3WY2MMTGA
+// @downloadURL    https://raw.githubusercontent.com/mymggithub/flask-restful-api/main/tampermonkey/tampermonkey_script.js
+// @updateURL      https://raw.githubusercontent.com/mymggithub/flask-restful-api/main/tampermonkey/tampermonkey_script.js
 // @grant          GM_xmlhttpRequest
 // @grant          GM_getResourceText
 // @grant          GM_addStyle
