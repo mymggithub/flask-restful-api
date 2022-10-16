@@ -9,7 +9,7 @@ import sys
 logging.basicConfig(filename="log/default.log");
 
 DBconfig = {
-	"host":"127.0.0.1", 
+	"host":"mysql_db", 
 	"user":"root", 
 	"passwd":"pass123word",
 	"database":"yiiadv"
