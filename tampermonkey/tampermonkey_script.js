@@ -1,11 +1,14 @@
 // ==UserScript==
 // @name           Track Pageview
+// @version        1.1
 // @description    Sends Url to a local server
 // @include        https://twitter.com/*
 // @connect        192.168.1.8
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js
 // @require        https://gist.github.com/raw/2625891/waitForKeyElements.js
 // @resource       REMOTE_CSS https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css
+// @downloadURL    https://raw.githubusercontent.com/mymggithub/flask-restful-api/main/tampermonkey/tampermonkey_script.js?token=GHSAT0AAAAAABZFDTGMYPYINZJHBELJGK3WY2MMTGA
+// @updateURL      https://raw.githubusercontent.com/mymggithub/flask-restful-api/main/tampermonkey/tampermonkey_script.js?token=GHSAT0AAAAAABZFDTGMYPYINZJHBELJGK3WY2MMTGA
 // @grant          GM_xmlhttpRequest
 // @grant          GM_getResourceText
 // @grant          GM_addStyle
@@ -286,12 +289,11 @@ function getUser() {
 			update_settings({"pause":0}, function() {
 				$(".pause_code").removeClass("paused");
 			});
-			
 		}else{
 			update_settings({"pause":1}, function() {
 				$(".pause_code").addClass("paused");
 			});
-			
+
 		}
 	});
 	$(".is_online").dblclick(function (e) {
