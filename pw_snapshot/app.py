@@ -1,10 +1,14 @@
 #!/usr/bin/python
 
+import os
 import time
 import random
-from os.path import exists
 import mysql.connector
 from playwright.sync_api import sync_playwright
+import logging
+
+if not os.path.exists("log"):
+	os.mkdir('log');
 
 logging.basicConfig(filename="log/default.log");
 
@@ -15,6 +19,7 @@ DBconfig = {
 	"database":"yiiadv"
 };
 
+CONTINUE_LOOP = True;
 try:
 	time.sleep(5)
 	mydb = mysql.connector.connect(**DBconfig);
@@ -33,7 +38,9 @@ try:
 		mydb.close();
 		for i,x in enumerate(all_user_results):
 			u = x["t_username"];
-			if not exists("pics/{}.png".format(u)):
+			if not os.path.exists("pics"):
+				os.mkdir('pics');
+			if not os.path.exists("pics/{}.png".format(u)):
 				with sync_playwright() as p:
 					browser = p.chromium.launch()
 					page = browser.new_page()
@@ -67,3 +74,6 @@ except Exception as e:
 	logging.debug("----------");
 	logging.error(e);
 	logging.debug("----------");
+	while CONTINUE_LOOP:
+		print("Debug mode");
+		time.sleep(60)

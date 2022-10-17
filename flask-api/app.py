@@ -5,6 +5,10 @@ import mysql.connector
 import json
 import logging
 import sys
+import os
+
+if not os.path.exists("log"):
+	os.mkdir('log');
 
 logging.basicConfig(filename="log/default.log");
 log = logging.getLogger('werkzeug');
