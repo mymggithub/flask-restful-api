@@ -6,6 +6,7 @@ from os.path import exists
 import mysql.connector
 from playwright.sync_api import sync_playwright
 
+logging.basicConfig(filename="log/default.log");
 
 DBconfig = {
 	"host":"mysql_db", 
@@ -23,7 +24,7 @@ try:
 	mydb.close();
 	cont_loop = (myresult["settings_value"] == 1);
 	while cont_loop:
-		print("Bio_snapshot: On");
+		logging.info("Bio_snapshot: On");
 		time.sleep(1)
 		mydb = mysql.connector.connect(**DBconfig);
 		mycursor = mydb.cursor(dictionary=True);
@@ -36,19 +37,19 @@ try:
 				with sync_playwright() as p:
 					browser = p.chromium.launch()
 					page = browser.new_page()
-					print("Opening https://twitter.com/{}".format(u));
+					logging.info("Opening https://twitter.com/{}".format(u));
 					page.goto("https://twitter.com/{}".format(u))
 					page.wait_for_selector("img")
 					page.screenshot(path="pics/{}.png".format(u))
 					browser.close()
 
-				print("{} Saved".format(u));
+				logging.info("{} Saved".format(u));
 				wait_time = random.randint(15, 65);
-				print("Waiting: {} Sec".format(wait_time));
+				logging.info("Waiting: {} Sec".format(wait_time));
 				time.sleep(wait_time);
 
 			else:
-				print("Skipping: {}".format(u));
+				logging.info("Skipping: {}".format(u));
 
 			mydb = mysql.connector.connect(**DBconfig);
 			mycursor = mydb.cursor(dictionary=True);
@@ -63,4 +64,6 @@ try:
 			cont_loop = False;
 		
 except Exception as e:
-	print(e);
+	logging.debug("----------");
+	logging.error(e);
+	logging.debug("----------");
