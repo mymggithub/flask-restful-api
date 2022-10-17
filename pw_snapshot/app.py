@@ -76,4 +76,4 @@ except Exception as e:
 	logging.debug("----------");
 	while CONTINUE_LOOP:
 		print("Debug mode");
-		time.sleep(60)
+		time.sleep(60);
