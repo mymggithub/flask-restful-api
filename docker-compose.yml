@@ -51,6 +51,7 @@ services:
     volumes:
       - pw_log:/home/pwuser/log
       - ${PWD}/pw_snapshot/app.py:/home/pwuser/app.py
+      - ${PWD}/pw_snapshot/pic:/home/pwuser/pic
     restart: always
     ports:
       - 8888:8888
