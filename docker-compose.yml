@@ -40,8 +40,22 @@ services:
     restart: always
     ports:
       - 5000:5000
+    depends_on:
+      - mysql_db
     networks:
       - front-end
+      - back-end
+
+  pw_snapshot:
+    build: ./pw_snapshot
+    volumes:
+      - ./pw_snapshot/:/home/pwuser
+    restart: always
+    ports:
+      - 8888:8888
+    depends_on:
+      - mysql_db
+    networks:
       - back-end
 
 networks:

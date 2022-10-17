@@ -44,3 +44,14 @@ docker-compose up
 
 docker build -t flask-api .
 docker run -p 5000:5000 --name flack-api-c -it flask-api
+
+
+
+/home/pwuser
+docker build -t pw .
+docker run -v "$PWD":/home/pwuser --name pw-c -it pw
+docker run -v "$PWD":/home/pwuser -p 8888:8888 --name pw-c -it pw
+docker exec -it simple-api-pw_snapshot-1 /bin/bash
+docker start simple-api-pw_snapshot-1
+
+jupyter notebook --allow-root --ip 0.0.0.0 --port 8888

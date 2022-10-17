@@ -172,8 +172,11 @@ class Settings(Resource):
 		mycursor.execute(sql_query);
 		myresult = mycursor.fetchall();
 		mydb.close();
+		json_data={};
+		for i,x in enumerate(myresult):
+			json_data[x["settings_name"]] = x["settings_value"];
 		if len(myresult) > 0:
-			return make_response(jsonify({ "success":True, 'data':myresult[0] }), 200);
+			return make_response(jsonify({ "success":True, 'data':json_data }), 200);
 
 
 	def post(self):
@@ -186,10 +189,10 @@ class Settings(Resource):
 			mycursor = mydb.cursor(dictionary=True, buffered=True);
 			if "pause" in args:
 				if int(args["pause"]) == 1:
-					sql_query = f"UPDATE `settings` SET `paused` = 1";
+					sql_query = f"UPDATE `settings` SET `settings_value` = 1 WHERE `settings_name` = 'paused'";
 					msg = "Paused";
 				else: 
-					sql_query = f"UPDATE `settings` SET `paused` = 0";
+					sql_query = f"UPDATE `settings` SET `settings_value` = 0 WHERE `settings_name` = 'paused'";
 					msg = "Unpaused";
 			mycursor.execute(sql_query);
 			mydb.commit();
