@@ -35,7 +35,7 @@ services:
   flask-api:
     build: ./flask-api
     volumes:
-      - log_data:/opt/source-code/log
+      - api_log:/opt/source-code/log
       - ./flask-api/:/opt/source-code
     restart: always
     ports:
@@ -49,6 +49,7 @@ services:
   pw_snapshot:
     build: ./pw_snapshot
     volumes:
+      - pw_log:/home/pwuser/log
       - ./pw_snapshot/:/home/pwuser
     restart: always
     ports:
@@ -62,5 +63,6 @@ networks:
   front-end:
   back-end:  
 volumes:
+  api_log:
+  pw_log:
   db_data:
-  log_data:
