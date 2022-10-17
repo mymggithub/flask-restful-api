@@ -61,3 +61,10 @@ docker exec -it simple-api-pw_snapshot-1 /bin/bash
 docker start simple-api-pw_snapshot-1
 
 jupyter notebook --allow-root --ip 0.0.0.0 --port 8888
+
+
+https://stackoverflow.com/questions/67255873/how-can-i-remove-m-character-which-is-showing-in-my-file-on-git
+
+https://askubuntu.com/questions/304999/not-able-to-execute-a-sh-file-bin-bashm-bad-interpreter
+
+sed -i -e 's/\r$//' create_mgw_3shelf_6xIPNI1P.sh
