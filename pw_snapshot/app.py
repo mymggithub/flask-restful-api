@@ -10,7 +10,7 @@ import logging
 if not os.path.exists("log"):
 	os.mkdir('log');
 
-logging.basicConfig(filename="log/default.log");
+logging.basicConfig(filename="log/default.log", level=logging.DEBUG);
 
 DBconfig = {
 	"host":"mysql_db", 
