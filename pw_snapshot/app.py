@@ -95,6 +95,7 @@ try:
 							img_elem = page.query_selector('[href="/{}/photo"] img'.format(u));
 							img_down(img_elem.get_attribute('src'), u);
 
+						page.evaluate("""() =>  document.evaluate("//*[@id='layers']/div", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.style.display = "none" """)
 						page.screenshot(path="pics/shots/{}.png".format(u))
 						browser.close()
 

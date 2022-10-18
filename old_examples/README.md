@@ -68,3 +68,17 @@ https://stackoverflow.com/questions/67255873/how-can-i-remove-m-character-which-
 https://askubuntu.com/questions/304999/not-able-to-execute-a-sh-file-bin-bashm-bad-interpreter
 
 sed -i -e 's/\r$//' create_mgw_3shelf_6xIPNI1P.sh
+
+
+
+page.eval_on_selector('//*[@id="layers"]/div', "element => element.style.display = 'hidden'")
+page.evaluate(
+"""
+function getElementByXpath(path) {
+  return document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+}
+getElementByXpath("//html[1]/body[1]/div[1]").style.display = "none"
+""")
+print(page.query_selector('//*[@id="layers"]/div').inner_html())
+.querySelector('xpath=..')
+page.evaluate('$("span:contains(Don’t miss what’s happening)").parent().parent().parent().parent().remove()')
