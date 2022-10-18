@@ -1,3 +1,4 @@
 Dockerfile
 build.sh
 exec.sh
+clean.sh
