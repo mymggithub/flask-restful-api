@@ -78,14 +78,24 @@ try:
 						print(msg, flush=True);
 						page.goto("https://twitter.com/{}".format(u));
 						page.wait_for_selector('img');
-						page.screenshot(path="pics/shots/{}.png".format(u))
 						img_elem = page.query_selector('[href="/{}/photo"] img'.format(u));
 						if img_elem is not None:
 							img_down(img_elem.get_attribute('src'), u);
 						else:
-							msg = "PFP Missing";
-							logging.info(msg);
-							print(msg, flush=True);
+							if page.query_selector("span :text('Yes, view profile')"):
+								msg = "PFP Blocked";
+								logging.info(msg);
+								print(msg, flush=True);
+								page.locator("span :text('Yes, view profile')").click()
+								page.mouse.wheel(0, -15000)
+							else:
+								msg = "PFP Missing";
+								logging.info(msg);
+								print(msg, flush=True);
+							img_elem = page.query_selector('[href="/{}/photo"] img'.format(u));
+							img_down(img_elem.get_attribute('src'), u);
+
+						page.screenshot(path="pics/shots/{}.png".format(u))
 						browser.close()
 
 					msg = "{} Saved".format(u);
