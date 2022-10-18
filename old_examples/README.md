@@ -82,3 +82,21 @@ getElementByXpath("//html[1]/body[1]/div[1]").style.display = "none"
 print(page.query_selector('//*[@id="layers"]/div').inner_html())
 .querySelector('xpath=..')
 page.evaluate('$("span:contains(Don’t miss what’s happening)").parent().parent().parent().parent().remove()')
+
+
+docker run --rm --volumes-from simple-api-mysql_db-1 -v ~/backup:/backup ubuntu bash -c “cd /var/lib/ghost/content && tar cvf /backup/ghost-site.tar .”
+
+
+
+docker run --rm --volumes-from simple-api-mysql_db-1 -v db_data:/var/lib/mysql -v ~/backup:/backup -it mysql bash -l
+
+
+printf '[mysqldump]\npassword=pass123word\n' > .my.cnf
+
+
+
+
+mysqldump --defaults-file=/backup/.my.cnf –u root yiiadv > my_db.sql
+
+
+mysqldump --all-databases --single-transaction --quick --lock-tables=false > full-backup-$(date +%F).sql -u root
