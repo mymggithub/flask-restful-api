@@ -34,6 +34,9 @@ DBconfig = {
 
 KEEP_ALIVE = False;
 
+def hide_elem_JSxpath(pg, current_xpath):
+	pg.evaluate("""() =>  document.evaluate(`{}`, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.style.display = "none" """.format(current_xpath));
+
 
 def img_down(link, filename):
 	response  = requests.get(link).content 
@@ -95,7 +98,9 @@ try:
 							img_elem = page.query_selector('[href="/{}/photo"] img'.format(u));
 							img_down(img_elem.get_attribute('src'), u);
 
-						page.evaluate("""() =>  document.evaluate("//*[@id='layers']/div", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.style.display = "none" """)
+						hide_elem_JSxpath(page, """//*[@id="layers"]/div""");
+						hide_elem_JSxpath(page, """//*[@id="react-root"]/div/div/div[2]/header/div""");
+						hide_elem_JSxpath(page, """//*[@id="react-root"]/div/div/div[2]/main/div/div/div/div[2]/div/div[2]/div/div/div/div[3]""");
 						page.screenshot(path="pics/shots/{}.png".format(u))
 						browser.close()
 
