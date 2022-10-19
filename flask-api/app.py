@@ -54,9 +54,9 @@ class TwitterHomeApi(Resource):
 
 	def post(self):
 		args = request.json;
+		proj_id = t_username = desc = bday = "";
+		following = followers = 0;
 		try:
-			proj_id = t_username = desc = bday = "";
-			following = followers = 0;
 			if "proj_id" in args:
 				proj_id = int(args["proj_id"]);
 			if "t_username" in args:
@@ -210,12 +210,52 @@ class Settings(Resource):
 			return make_response(jsonify({ "success":True, "msg":msg }), 201);
 		return make_response(jsonify({ "success":False, "msg":"Nothing to update" }), 200);
 
+class AddFollowers(Resource):
+	def post(self):
+		args = request.json;
+		proj_id = 2;
+		t_username = [];
+		try:
+			if "proj_id" in args:
+				proj_id = int(args["proj_id"]);
+
+			if "t_usernames" in args and type(args["t_usernames"])  == list:
+				t_usernames = [str(x) for x in args["t_usernames"]];
+
+		except Exception as e:
+			logging.debug("-----{}::{}()-----".format(self.__class__.__name__,  sys._getframe().f_code.co_name));
+			logging.info(args);
+			logging.error(e);
+			logging.debug("-----{}::{}()-----".format(self.__class__.__name__,  sys._getframe().f_code.co_name));
+			return make_response(jsonify({ "success":False, "error":e, "msg":"Error with the vars" }), 400);
+
+		sql_query = "";
+		try:
+			if len(t_usernames):
+				mydb = mysql.connector.connect(**DBconfig);
+				mycursor = mydb.cursor(dictionary=True, buffered=True);
+				sql_query += "INSERT IGNORE INTO `twitter` (`twit_id`, `proj_id`, `t_username`, `following`, `followers`, `description`, `last_tweet_id`, `last_popular_tweet_id`, `bday`) VALUES";
+				sql_query += str(", ".join(["(NULL, "+str(proj_id)+", '"+str(x)+"', 0, 0, '', '0', '0', '')" for x in t_usernames]));
+				mycursor.execute(sql_query);
+				mydb.commit();
+				mydb.close();
+				return make_response(jsonify({ "success":bool(mycursor.rowcount), "msg":"Created" }), 201);
+			return make_response(jsonify({ "success":False, "msg":"Exists" }), 200);
+		except Exception as e:
+			logging.debug("-----{}::{}()-----".format(self.__class__.__name__,  sys._getframe().f_code.co_name));
+			logging.info(sql_query);
+			logging.error(e);
+			logging.debug("-----{}::{}()-----".format(self.__class__.__name__,  sys._getframe().f_code.co_name));
+			return make_response(jsonify({ "success":False, "error":str(e), "sql":sql_query, "msg":"Error with mysql" }), 400);
+			# return Response(str(e), status=status.HTTP_404_NOT_FOUND, template_name=None, content_type=None)
+
 api.add_resource(TwitterHomeApi, '/');
 api.add_resource(IsOnline, '/online/');
 api.add_resource(FindUsername, '/find_user/<string:t_username>');
 api.add_resource(DeleteUsername, '/del_user/<string:t_username>');
 api.add_resource(UpdateUsername, '/update_user/<string:t_username>');
 api.add_resource(Settings, '/settings/');
+api.add_resource(AddFollowers, '/add_followers/');
 
 
 if __name__ == "__main__":
