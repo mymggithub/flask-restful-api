@@ -72,6 +72,8 @@ try:
 		if len(all_user_results):
 			for i,x in enumerate(all_user_results):
 				u = x["t_username"];
+				if u == "":
+					continue;
 				if not os.path.exists("pics/shots/{}.png".format(u)):
 					with sync_playwright() as p:
 						browser = p.chromium.launch()
