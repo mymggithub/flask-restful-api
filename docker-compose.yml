@@ -54,6 +54,7 @@ services:
       - ${PWD}/pw_snapshot/app.py:/home/pwuser/app.py
       - ${PWD}/pw_snapshot/note.sh:/home/pwuser/note.sh
       - ${PWD}/pw_snapshot/pics:/home/pwuser/pics
+      - ${PWD}/pw_snapshot/cache:/home/pwuser/cache
     restart: always
     ports:
       - 8888:8888
@@ -61,6 +62,19 @@ services:
       - mysql_db
     networks:
       - back-end
+
+  # sandbox:
+  #   build: ./sandbox
+  #   volumes:
+  #     - ${PWD}/sandbox:/home/pwuser
+  #   restart: always
+  #   ports:
+  #     - 80:80
+  #   depends_on:
+  #     - mysql_db
+  #   networks:
+  #     - front-end
+  #     - back-end
 
 networks:
   front-end:

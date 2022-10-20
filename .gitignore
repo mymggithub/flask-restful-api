@@ -1,7 +1,5 @@
-
 *.ipynb
-
 pw_snapshot/pics/
-
+pw_snapshot/cache/
 pw_snapshot/log/
 flask-api/log/
