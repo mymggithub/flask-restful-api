@@ -100,3 +100,5 @@ mysqldump --defaults-file=/backup/.my.cnf –u root yiiadv > my_db.sql
 
 
 mysqldump --all-databases --single-transaction --quick --lock-tables=false > full-backup-$(date +%F).sql -u root
+
+command: --default-authentication-plugin=mysql_native_password
