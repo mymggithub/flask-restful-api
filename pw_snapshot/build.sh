@@ -1,2 +1,2 @@
 #!/bin/sh
-docker build -t pw_ss .
+docker build -t pw_ss --no-cache .
