@@ -4,6 +4,7 @@ RUN pip install mysql-connector
 RUN pip install notebook
 RUN pip install requests
 RUN pip install Pillow
+RUN pip install lxml
 
 
 COPY . /home/pwuser

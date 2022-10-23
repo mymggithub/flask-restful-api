@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import io
 import os
 import time
 import random
@@ -7,7 +8,7 @@ import mysql.connector
 from playwright.sync_api import sync_playwright
 import logging
 import requests
-import io
+from lxml import html
 from PIL import Image
 required_folders = {
 	"log":"log",
@@ -63,7 +64,10 @@ try:
 		mydb = mysql.connector.connect(**DBconfig);
 		mycursor = mydb.cursor(dictionary=True);
 		mycursor.execute("SELECT `t_username` FROM `twitter_skip` ORDER BY `ts_id` ASC;");
-		skip_list = [list(x.values())[0] for x in mycursor.fetchall()] + [x.replace(".html","") for x in os.listdir(required_folders["cache"])];
+		twitter_skipped = mycursor.fetchall();
+		mycursor.execute("SELECT `filename` FROM `downloaded` ORDER BY `d_id` ASC;");
+		already_downloaded = mycursor.fetchall();
+		skip_list = [list(x.values())[0] for x in twitter_skipped] + [list(x.values())[0] for x in already_downloaded];
 		sql_not = "";
 		if len(skip_list):
 			sql_not = "WHERE `t_username` NOT IN ({})".format(", ".join(["'{}'".format(x) for x in skip_list]));
@@ -76,10 +80,15 @@ try:
 				if u == "":
 					continue;
 				with sync_playwright() as p:
+					ua = (
+						"Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+						"AppleWebKit/537.36 (KHTML, like Gecko) "
+						"Chrome/69.0.3497.100 Safari/537.36"
+					)
 					browser = p.chromium.launch();
-					page = browser.new_page();
+					page = browser.new_page(user_agent=ua);
 					show_msg("{}/{} - Opening https://twitter.com/{}".format(i+1,len(all_user_results),u));
-					page.goto("https://twitter.com/{}".format(u));
+					page.goto("https://twitter.com/{}".format(u), wait_until="domcontentloaded");
 					page.wait_for_selector('img');
 					img_elem = page.query_selector('[href="/{}/photo"] img'.format(u));
 					if img_elem is not None:
@@ -101,15 +110,28 @@ try:
 						img_elem = page.query_selector('[href="/{}/photo"] img'.format(u));
 						img_down(img_elem.get_attribute('src'), u);
 
-					hide_elem_JSxpath(page, """//*[@id="layers"]/div""");
-					hide_elem_JSxpath(page, """//*[@id="react-root"]/div/div/div[2]/header/div""");
-					hide_elem_JSxpath(page, """//*[@id="react-root"]/div/div/div[2]/main/div/div/div/div[2]/div/div[2]/div/div/div/div[3]""");
+					mydb = mysql.connector.connect(**DBconfig);
+					mycursor = mydb.cursor(dictionary=True, buffered=True);
+					sql_query = f"SELECT `path` FROM `paths` WHERE `action`= 'hide' ORDER BY `p_id` ASC;";
+					mycursor.execute(sql_query);
+					hide_paths_r =  mycursor.fetchall();
+					mydb.close();
+
+					for x in hide_paths_r:
+						hide_elem_JSxpath(page, x["path"]);
+
 					page.screenshot(path="{}/{}.png".format(required_folders["shots"], u))
 					html_str = page.query_selector('html').inner_html();
 					with open("{}/{}.html".format(required_folders["cache"], u), "w") as text_file:
 						text_file.write(html_str)
 					browser.close()
 
+				mydb = mysql.connector.connect(**DBconfig);
+				mycursor = mydb.cursor(dictionary=True, buffered=True);
+				sql_query = f"INSERT INTO `downloaded` (`d_id`, `proj_id`, `filename`) VALUES (NULL, 2, %(filename)s)";
+				mycursor.execute(sql_query, {"filename": u});
+				mydb.commit();
+				mydb.close();
 				show_msg("{} Saved".format(u));
 				wait_time = random.randint(15, 65);
 				show_msg("Waiting: {} Sec".format(wait_time));
