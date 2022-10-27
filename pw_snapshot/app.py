@@ -1,15 +1,9 @@
 #!/usr/bin/python
-import io
-import os
-import time
-import random
-import mysql.connector
+import os, logging, time, random, requests
 from playwright.sync_api import sync_playwright
-import logging
-import requests
+import mysql.connector, io
 from lxml import html
 from PIL import Image
-from concurrent.futures import ThreadPoolExecutor
 
 logging.basicConfig(filename="log/default.log");
 logging.getLogger().setLevel(logging.DEBUG);
@@ -20,18 +14,13 @@ def show_msg(msg):
 	print(msg, flush=True);
 
 class MyPlaywright:
+	DBconfig = { "host":"mysql_db", "user":"root", "passwd":"pass123word", "database":"yiiadv" };
 	required_folders = {
 		"log":"log",
 		"pics":"pics",
 		"shots":"pics/shots",
 		"pfp":"pics/pfp",
 		"cache":"cache"
-	};
-	DBconfig = {
-		"host":"mysql_db", 
-		"user":"root", 
-		"passwd":"pass123word",
-		"database":"yiiadv"
 	};
 	ua = (
 		"Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -40,7 +29,9 @@ class MyPlaywright:
 	);
 	page = {};
 	browser = {};
-	def __init__(self):
+	workflow_id = 1;
+	def __init__(self, workflow_id):
+		self.workflow_id = workflow_id;
 		self.load_required_dir();
 		while self.get_setting("bio_snapshot"):
 			show_msg("Bio_snapshot: On");
@@ -50,33 +41,11 @@ class MyPlaywright:
 				for i,user in enumerate(usernames_list):
 					if user == "":
 						continue;
-					with sync_playwright() as p:
-						self.browser = p.chromium.launch();
-						self.page = self.browser.new_page(user_agent=self.ua);
-						show_msg("{}/{} - Opening https://twitter.com/{}".format(i+1,len(usernames_list),user));
-						self.page.goto("https://twitter.com/{}".format(user), wait_until="domcontentloaded");
-						self.page.wait_for_selector('img');
-						img_elem = self.page.query_selector('[href="/{}/photo"] img'.format(user));
-						if img_elem is not None:
-							self.download_img(img_elem.get_attribute('src'), user);
-						else:
-							if self.page.query_selector("span :text('Yes, view profile')"):
-								show_msg("PFP Blocked");
-								self.page.locator("span :text('Yes, view profile')").click()
-								self.page.mouse.wheel(0, -15000)
-							else:
-								show_msg("PFP Missing");
-								self.set_to_skip(user);
-								continue;
-							img_elem = self.page.query_selector('[href="/{}/photo"] img'.format(user));
-							self.download_img(img_elem.get_attribute('src'), user);
-
-						self.hide_xpaths();
-						self.save(user);
-						self.browser.close();
-						wait_time = random.randint(15, 65);
-						show_msg("Waiting: {} Sec".format(wait_time));
-						time.sleep(wait_time);
+					if not self.load_browser(i, usernames_list, user):
+						continue;
+					wait_time = random.randint(15, 65);
+					show_msg("Waiting: {} Sec".format(wait_time));
+					time.sleep(wait_time);
 			show_msg("Done");
 		show_msg("Quiting");
 
@@ -194,10 +163,56 @@ class MyPlaywright:
 			logging.error("MySQL Not connected");
 			logging.debug("----------");
 
+	def get_workflow_url(self):
+		sql_query = "";
+		mydb = mysql.connector.connect(**self.DBconfig);
+		if mydb.is_connected():
+			mycursor = mydb.cursor(dictionary=True, buffered=True);
+			sql_query = """SELECT `wf_url` FROM `workflow_main` WHERE `wfm_id` = {}""".format(self.workflow_id);
+			mycursor.execute(sql_query);
+			r =  mycursor.fetchall();
+			mydb.close();
+			return [list(x.values())[0] for x in r];
+		else:
+			logging.debug("----------");
+			logging.error("MySQL Not connected");
+			logging.debug("----------");
+
+	def load_browser(self, i, usernames_list, user):
+		url = "";
+		url_arr = self.get_workflow_url();
+		if len(url_arr) and type(url_arr) is list:
+			url = url_arr[0]
+		with sync_playwright() as p:
+			self.browser = p.chromium.launch();
+			self.page = self.browser.new_page(user_agent=self.ua);
+			show_msg("{}/{} - Opening {}".format(i+1, len(usernames_list),url.format(user)));
+			self.page.goto(url.format(user), wait_until="domcontentloaded");
+			self.page.wait_for_selector('img');
+			img_elem = self.page.query_selector('[href="/{}/photo"] img'.format(user));
+			if img_elem is not None:
+				self.download_img(img_elem.get_attribute('src'), user);
+			else:
+				if self.page.query_selector("span :text('Yes, view profile')"):
+					show_msg("PFP Blocked");
+					self.page.locator("span :text('Yes, view profile')").click()
+					self.page.mouse.wheel(0, -15000)
+				else:
+					show_msg("PFP Missing");
+					self.set_to_skip(user);
+					return False;
+				img_elem = self.page.query_selector('[href="/{}/photo"] img'.format(user));
+				self.download_img(img_elem.get_attribute('src'), user);
+
+			self.hide_xpaths();
+			self.save(user);
+			self.browser.close();
+			return True;
+
 if __name__ == '__main__':
 	KEEP_ALIVE = False;
 	try:
-		pw = MyPlaywright();
+		pw = MyPlaywright(1);
 	except Exception as e:
 		logging.debug("----------");
 		logging.error(e);
