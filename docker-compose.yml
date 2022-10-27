@@ -1,10 +1,10 @@
 version: '3.1'
 services:
 
-  mysql_db:
+  mysql-db:
     image: mysql:latest
     volumes:
-      - db_data:/var/lib/mysql
+      - db-data:/var/lib/mysql
       - ${PWD}/bkup:/bkup
     command: --default-authentication-plugin=mysql_native_password
     restart: always
@@ -23,12 +23,12 @@ services:
     environment:
       PMA_ARBITRARY: 1
       PMA_PORT: 3306
-      PMA_HOST: mysql_db
+      PMA_HOST: mysql-db
       PMA_USER: root
       PMA_PASSWORD: pass123word
       UPLOAD_LIMIT: 100000000
     depends_on:
-      - mysql_db
+      - mysql-db
     networks:
       - front-end
       - back-end
@@ -36,21 +36,22 @@ services:
   flask-api:
     build: ./flask-api
     volumes:
-      - api_log:/opt/source-code/log
+      - api-log:/opt/source-code/log
       - ${PWD}/flask-api/app.py:/opt/source-code/app.py
     restart: always
     ports:
       - 5000:5000
     depends_on:
-      - mysql_db
+      - mysql-db
     networks:
       - front-end
       - back-end
 
-  pw_snapshot:
+  pw-snapshot:
+    container_name: pw-snapshot
     build: ./pw_snapshot
     volumes:
-      - pw_log:/home/pwuser/log
+      - pw-log:/home/pwuser/log
       - ${PWD}/pw_snapshot/app.py:/home/pwuser/app.py
       - ${PWD}/pw_snapshot/note.sh:/home/pwuser/note.sh
       - ${PWD}/pw_snapshot/pics:/home/pwuser/pics
@@ -59,9 +60,19 @@ services:
     ports:
       - 8888:8888
     depends_on:
-      - mysql_db
+      - mysql-db
     networks:
       - back-end
+
+  apache-ui:
+    image: php:8.0-apache
+    volumes:
+      - ${PWD}/html-ui:/var/www/html/
+    ports:
+      - 80:80
+    depends_on:
+      - flask-api
+
 
   # sandbox:
   #   build: ./sandbox
@@ -80,6 +91,6 @@ networks:
   front-end:
   back-end:  
 volumes:
-  api_log:
-  pw_log:
-  db_data:
+  api-log:
+  pw-log:
+  db-data:

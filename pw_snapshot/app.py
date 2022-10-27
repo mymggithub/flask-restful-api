@@ -14,7 +14,7 @@ def show_msg(msg):
 	print(msg, flush=True);
 
 class MyPlaywright:
-	DBconfig = { "host":"mysql_db", "user":"root", "passwd":"pass123word", "database":"yiiadv" };
+	DBconfig = { "host":"mysql-db", "user":"root", "passwd":"pass123word", "database":"yiiadv" };
 	required_folders = {
 		"log":"log",
 		"pics":"pics",

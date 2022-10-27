@@ -15,7 +15,7 @@ log = logging.getLogger('werkzeug');
 log.setLevel(logging.ERROR);
 
 DBconfig = {
-	"host":"mysql_db", 
+	"host":"mysql-db", 
 	"user":"root", 
 	"passwd":"pass123word",
 	"database":"yiiadv"
