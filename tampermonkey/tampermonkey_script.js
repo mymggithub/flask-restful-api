@@ -192,7 +192,7 @@ function showMsg(msg) {
 function create_user() {
 	if (get_username() != "" && window.location.href.replace("https://twitter.com/","").split("/").length == 1) {
 		var tmp_data = get_data();
-		tmp_data["proj_id"] = 2;
+		tmp_data["proj_id"] = 1;
 		// console.log(tmp_data);
 		var requestCreateUser = {
 			method: "POST",
@@ -269,7 +269,7 @@ function get_user() {
 }
 
 function track_f(tmp_usernames_arr) {
-	var tmp_data = {"proj_id":2, "t_usernames":tmp_usernames_arr};
+	var tmp_data = {"proj_id":1, "t_usernames":tmp_usernames_arr};
 	var requestCreateUser = {
 		method: "POST",
 		url: REMOTE_API+"/add_followers/",
