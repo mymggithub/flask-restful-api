@@ -102,3 +102,6 @@ mysqldump --defaults-file=/backup/.my.cnf –u root yiiadv > my_db.sql
 mysqldump --all-databases --single-transaction --quick --lock-tables=false > full-backup-$(date +%F).sql -u root
 
 command: --default-authentication-plugin=mysql_native_password
+
+
+#(CASE WHEN (`following`-`followers`) > 0 THEN FLOOR((`following`-`followers`)*(100/`following`)) ELSE 0 END) as `will_f`, (CASE WHEN (`followers`-`following`) > 0 THEN FLOOR((`followers`-`following`)*(100/`followers`)) ELSE 0 END) as `wont_f`

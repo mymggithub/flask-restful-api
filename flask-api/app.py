@@ -12,7 +12,7 @@ if not os.path.exists("log"):
 
 logging.basicConfig(filename="log/default.log");
 log = logging.getLogger('werkzeug');
-log.setLevel(logging.ERROR);
+# log.setLevel(logging.ERROR);
 
 DBconfig = {
 	"host":"mysql-db", 
@@ -40,17 +40,36 @@ class IsOnline(Resource):
 
 		return make_response(jsonify({ "success":True, "status":True }), 200);
 
+class UpdateWillWont(Resource):
+	def get(self):
+		try:
+			mydb = mysql.connector.connect(**DBconfig);
+			mycursor = mydb.cursor(dictionary=True, buffered=True);
+			sql_query = f"UPDATE `twitter` SET `will_f` = (CASE WHEN (`following`-`followers`) > 0 THEN FLOOR((`following`-`followers`)*(100/`following`)) ELSE 0 END), `wont_f` = (CASE WHEN (`followers`-`following`) > 0 THEN FLOOR((`followers`-`following`)*(100/`followers`)) ELSE 0 END);";
+			mycursor.execute(sql_query);
+			mydb.commit();
+			mydb.close();
+		except Exception as e:
+			logging.debug("-----{}::{}()-----".format(self.__class__.__name__,  sys._getframe().f_code.co_name));
+			logging.error(e);
+			logging.debug("-----{}::{}()-----".format(self.__class__.__name__,  sys._getframe().f_code.co_name));
+			return make_response(jsonify({ "success":False, "status":False, "error":e, "msg":"Error loading database" }), 200);
+
+		return make_response(jsonify({ "success":True, "status":True }), 200);
+
 class TwitterHomeApi(Resource):
 	def get(self):
 		mydb = mysql.connector.connect(**DBconfig);
 		mycursor = mydb.cursor(dictionary=True, buffered=True);
-		mycursor.execute("SELECT * FROM twitter");
+		mycursor.execute("SELECT * FROM `twitter`;");
 		myresult = mycursor.fetchall();
 		mydb.close();
-		json_data=[];
-		for i,x in enumerate(myresult):
-			json_data.append([i,x]);
-		return make_response(jsonify({ "success":True, 'data':json_data }), 200);
+		if request.args == {}:
+			return make_response(jsonify({ "success":True, 'data':myresult }), 200);
+		else:
+			return make_response('{funcname}({data})'.format( funcname=request.args.get('callback'), data=json.dumps({ "success":True, 'data':myresult }) ), 200);
+		
+
 
 	def post(self):
 		args = request.json;
