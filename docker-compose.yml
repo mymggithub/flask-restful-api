@@ -67,11 +67,14 @@ services:
   apache-ui:
     image: php:8.0-apache
     volumes:
-      - ${PWD}/html-ui:/var/www/html/
+      - ${PWD}/web-ui:/var/www/html/
     ports:
       - 80:80
     depends_on:
       - flask-api
+    networks:
+      - front-end
+      - back-end  
 
 
   # sandbox:
