@@ -266,13 +266,28 @@
             </div>
             <footer class="bg-white sticky-footer">
                 <div class="container my-auto">
-                    <div class="text-center my-auto copyright"><span>Copyright © Brand 2022</span></div>
                 </div>
             </footer>
         </div>
         <a class="border rounded d-inline scroll-to-top" href="#page-top"><i class="fas fa-angle-up"></i></a>
 
     </div>
+
+    <ul id="menu">
+        <li>
+            Actions
+            <ul>
+                <li>Watch</li>
+                <li>Follow</li>
+                <li>Unfollow</li>
+                <li>Block</li>
+            </ul>
+        </li>
+        <li class="k-separator"></li>
+        <li>
+            Scan
+        </li>
+    </ul>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
@@ -494,6 +509,40 @@
 
                 kendo.bind($(this), dataItem);
             });
+
+            setTimeout(function () {
+
+                var menu = $("#menu"),
+                    original = menu.clone(true);
+
+                original.find(".k-active").removeClass("k-active");
+
+                $("#apply").click(function (e) {
+                    e.preventDefault();
+                    var clone = original.clone(true);
+
+                    menu.getKendoContextMenu().destroy();
+                    clone.appendTo("#grid");
+
+                    initMenu();
+                });
+
+                var initMenu = function () {
+                    menu = $("#menu").kendoContextMenu({
+                        target: "#grid",
+                        // filter: ".product",
+                        animation: {
+                            open: { effects: "fadeIn" },
+                            duration: 500
+                        },
+                        select: function(e) {
+                            // Do something on select
+                        }
+                    });
+                };
+
+                initMenu();
+            }, 0);
         }
     </script>
 </body>
