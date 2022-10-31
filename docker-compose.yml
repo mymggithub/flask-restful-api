@@ -55,7 +55,6 @@ services:
       - ${PWD}/pw_snapshot/app.py:/home/pwuser/app.py
       - ${PWD}/pw_snapshot/note.sh:/home/pwuser/note.sh
       - ${PWD}/pw_snapshot/pics:/home/pwuser/pics
-      - ${PWD}/pw_snapshot/cache:/home/pwuser/cache
     restart: always
     ports:
       - 8888:8888
@@ -67,7 +66,8 @@ services:
   apache-ui:
     image: php:8.0-apache
     volumes:
-      - ${PWD}/web-ui:/var/www/html/
+      - ${PWD}/web-ui:/var/www/html
+      - ${PWD}/./pw_snapshot/pics/pfp:/var/www/html/assets/img/pfp
     ports:
       - 80:80
     depends_on:
