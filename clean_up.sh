@@ -9,6 +9,8 @@ docker rmi simple-api-pw-snapshot
 docker rmi simple-api-flask-api
 docker rmi phpmyadmin
 docker rmi mysql
+docker rmi php
 docker volume rm simple-api_pw-log
 docker volume rm simple-api_api-log
 docker volume rm simple-api_db-data
+docker volume rm simple-api_pfp-imgs
