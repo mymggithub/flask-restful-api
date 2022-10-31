@@ -76,11 +76,15 @@ class UpdateWillWont(Resource):
 class TwitterHomeApi(Resource):
 	def get(self):
 		mydb = mysql.connector.connect(**DBconfig);
+		limit = "";
+		if 'start' in request.args and 'offset' in request.args:
+			limit = "LIMIT {} OFFSET {}".format(int(request.args.get('offset')), int(request.args.get('start')));
 		mycursor = mydb.cursor(dictionary=True, buffered=True);
-		mycursor.execute("SELECT * FROM `twitter`;");
+		sql = "SELECT * FROM `twitter` {};".format(limit);
+		mycursor.execute(sql);
 		myresult = mycursor.fetchall();
 		mydb.close();
-		if request.args == {}:
+		if 'callback' not in request.args:
 			return make_response(jsonify({ "success":True, 'data':myresult }), 200);
 		else:
 			return make_response('{funcname}({data})'.format( funcname=request.args.get('callback'), data=json.dumps({ "success":True, 'data':myresult }) ), 200);
