@@ -28,41 +28,41 @@ $(function () {
     ajax_chart(myChart, json_url);
     $("#menu").hide();
     var dataSource = new kendo.data.DataSource({
-            transport: {
-                read: {
-                    url: crudServiceBaseUrl + "/",
-                    dataType: "jsonp"
-                },
-                parameterMap: function (options, operation) {
-                    if (operation !== "read" && options.models) {
-                        return { models: kendo.stringify(options.models) };
-                    }
+        transport: {
+            read: {
+                url: crudServiceBaseUrl + "/",
+                dataType: "jsonp"
+            },
+            parameterMap: function (options, operation) {
+                if (operation !== "read" && options.models) {
+                    return { models: kendo.stringify(options.models) };
+                }
+            }
+        },
+        batch: true,
+        pageSize: 200,
+        // autoSync: true,
+        // aggregate: [{
+        //     field: "TotalSales",
+        //     aggregate: "sum"
+        // }],
+        // group: { field: "following", dir: "desc" },
+        sort: { field: "following", dir: "desc" },
+        schema: {
+            model: {
+                id: "twit_id",
+                fields: {
+                    twit_id: { editable: false, nullable: true },
+                    // Discontinued: { type: "boolean", editable: false },
+                    following: { type: "number" },
+                    followers: { type: "number" },
+                    will_f: { type: "number" },
+                    wont_f: { type: "number" },
                 }
             },
-            batch: true,
-            pageSize: 200,
-            // autoSync: true,
-            // aggregate: [{
-            //     field: "TotalSales",
-            //     aggregate: "sum"
-            // }],
-            // group: { field: "following", dir: "desc" },
-            sort: { field: "following", dir: "desc" },
-            schema: {
-                model: {
-                    id: "twit_id",
-                    fields: {
-                        twit_id: { editable: false, nullable: true },
-                        // Discontinued: { type: "boolean", editable: false },
-                        following: { type: "number" },
-                        followers: { type: "number" },
-                        will_f: { type: "number" },
-                        wont_f: { type: "number" },
-                    }
-                },
-                data: "data"
-            }
-        });
+            data: "data"
+        }
+    });
 
     $("#grid").kendoGrid({
         dataSource: dataSource,
@@ -94,6 +94,9 @@ $(function () {
         groupable: true,
         filterable: true,
         dataBound: onDataBound,
+        page: onPaging,
+        dataBinding: onDataBinding,
+        change: onChange,
         toolbar: ["search"],
         columns: [
             {
@@ -104,7 +107,7 @@ $(function () {
             {
                 field: "t_username",
                 title: "Username",
-                template: "<div class='product-photo'  style='background-image: url(../assets/img/pfp/#:data.t_username#.jpg);'></div><div class='product-name'><a href='https://twitter.com/#: t_username #' target='_blank'>#: t_username #</a></div>",
+                template: "<div class='user-photo'  style='background-image: url(../assets/img/pfp/#:data.t_username#.jpg);'></div><div class='username-list'><a href='https://twitter.com/#: t_username #' target='_blank'>#: t_username #</a></div>",
                 width: 300
             }, 
             // {
@@ -128,13 +131,14 @@ $(function () {
                 title: "Will follow back",
                 format: "{0}%",
                 template: "<span id='chart_#= twit_id#' class='sparkline-chart'></span>",
+                template: "<div><div style='display: inline-block; width: 80%;'><div class='progress'><div class='progress-bar bg-success' aria-valuenow='#= will_f#' aria-valuemin='0' aria-valuemax='100' style='width: #= will_f#%;'>&nbsp;<span class='visually-hidden'></span></div></div></div><span> &nbsp;#= will_f#%</span></div>",
                 width: 220
             }, 
             {
                 field: "wont_f",
                 title: "Wont follow back",
                 format: "{0}%",
-                template: "<span id='chart_#= twit_id#' class='sparkline-chart-red'></span>",
+                template: "<div><div style='display: inline-block; width: 80%;'><div class='progress'><div class='progress-bar bg-danger' aria-valuenow='#= wont_f#' aria-valuemin='0' aria-valuemax='100' style='width: #= wont_f#%;'>&nbsp;<span class='visually-hidden'></span></div></div></div><span> &nbsp;#= wont_f#%</span></div>",
                 width: 220
             },
             // { command: "destroy", title: "&nbsp;", width: 120 }
@@ -142,105 +146,76 @@ $(function () {
     });
 });
 
+function onChange(arg) {
+    var selected = $.map(this.select(), function(item) {
+        return $(item).find(".username-list a").text();
+    });
+
+    console.log("Selected: " + selected.length + " item(s), [" + selected.join(", ") + "]");
+}
+function onPaging(arg) {
+    console.log("Paging to page index:" + arg.page);
+}
+function onDataBinding(arg) {
+    console.log("Grid data binding");
+}
 function onDataBound(e) {
     var grid = this;
-    grid.table.find("tr").each(function () {
-        var dataItem = grid.dataItem(this);
-        var themeColor = dataItem.Discontinued ? 'success' : 'error';
-        var text = dataItem.Discontinued ? 'Yes' : 'Nope';
+    // grid.table.find("tr").each(function () {
+    //     var dataItem = grid.dataItem(this);
+    //     var themeColor = dataItem.Discontinued ? 'success' : 'error';
+    //     var text = dataItem.Discontinued ? 'Yes' : 'Nope';
 
-        $(this).find(".badgeTemplate").kendoBadge({
-            themeColor: themeColor,
-            text: text,
-        });
+        // $(this).find(".badgeTemplate").kendoBadge({
+        //     themeColor: themeColor,
+        //     text: text,
+        // });
 
-        $(this).find(".sparkline-chart").kendoSparkline({
-            legend: {
-                visible: false
-            },
-            data: [Math.abs(dataItem.will_f)],
-            type: "bar",
-            chartArea: {
-                margin: 0,
-                width: 180,
-                background: "transparent"
-            },
-            seriesDefaults: {
-                color: "green",
-                labels: {
-                    visible: true,
-                    format: '{0}%',
-                    background: 'none'
-                }
-            },
-            categoryAxis: {
-                majorGridLines: {
-                    visible: false
-                },
-                majorTicks: {
-                    visible: false
-                }
-            },
-            valueAxis: {
-                type: "numeric",
-                min: 0,
-                max: 130,
-                visible: false,
-                labels: {
-                    visible: false
-                },
-                minorTicks: { visible: false },
-                majorGridLines: { visible: false }
-            },
-            tooltip: {
-                visible: false
-            }
-        });
-        $(this).find(".sparkline-chart-red").kendoSparkline({
-            legend: {
-                visible: false
-            },
-            data: [Math.abs(dataItem.wont_f)],
-            type: "bar",
-            chartArea: {
-                margin: 0,
-                width: 180,
-                background: "transparent"
-            },
-            seriesDefaults: {
-                color: "#ff0000",
-                labels: {
-                    visible: true,
-                    format: '{0}%',
-                    background: 'none'
-                }
-            },
-            categoryAxis: {
-                majorGridLines: {
-                    visible: false
-                },
-                majorTicks: {
-                    visible: false
-                }
-            },
-            valueAxis: {
-                type: "numeric",
-                min: 0,
-                max: 130,
-                visible: false,
-                labels: {
-                    visible: false
-                },
-                minorTicks: { visible: false },
-                majorGridLines: { visible: false }
-            },
-            tooltip: {
-                visible: false
-            }
-        });
+        // $(this).find(".sparkline-chart").kendoSparkline({
+        //     legend: {
+        //         visible: false
+        //     },
+        //     data: [Math.abs(dataItem.will_f)],
+        //     type: "bar",
+        //     chartArea: {
+        //         margin: 0,
+        //         width: 180,
+        //         background: "transparent"
+        //     },
+        //     seriesDefaults: {
+        //         color: "green",
+        //         labels: {
+        //             visible: true,
+        //             format: '{0}%',
+        //             background: 'none'
+        //         }
+        //     },
+        //     categoryAxis: {
+        //         majorGridLines: {
+        //             visible: false
+        //         },
+        //         majorTicks: {
+        //             visible: false
+        //         }
+        //     },
+        //     valueAxis: {
+        //         type: "numeric",
+        //         min: 0,
+        //         max: 130,
+        //         visible: false,
+        //         labels: {
+        //             visible: false
+        //         },
+        //         minorTicks: { visible: false },
+        //         majorGridLines: { visible: false }
+        //     },
+        //     tooltip: {
+        //         visible: false
+        //     }
+        // });
 
-        kendo.bind($(this), dataItem);
-    });
+        // kendo.bind($(this), dataItem);
+    // });
 
     setTimeout(function () {
         var menu = $("#menu"),
@@ -286,3 +261,7 @@ function ajax_chart(chart, url, data) {
         chart.resize()
     });
 }
+
+
+
+
