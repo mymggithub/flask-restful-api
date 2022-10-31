@@ -84,7 +84,7 @@
 
     <body id="page-top">
         <div id="wrapper">
-            <nav class="navbar navbar-dark align-items-start sidebar sidebar-dark accordion bg-gradient-primary p-0">
+            <nav class="navbar navbar-dark align-items-start sidebar sidebar-dark accordion bg-gradient-primary p-0 toggled">
                 <div class="container-fluid d-flex flex-column p-0">
                     <hr class="sidebar-divider my-0">
                     <ul class="navbar-nav text-light" id="accordionSidebar">
@@ -161,19 +161,19 @@
                                     <div class="card-body">
                                         <div class="row align-items-center no-gutters">
                                             <div class="col me-2">
-                                                <div class="text-uppercase text-info fw-bold text-xs mb-1"><span>Jobs</span></div>
+                                                <div class="text-uppercase text-danger fw-bold text-xs mb-1"><span>Errors</span></div>
                                                 <div class="row g-0 align-items-center">
                                                     <div class="col-auto">
-                                                        <div class="text-dark fw-bold h5 mb-0 me-3"><span>3</span></div>
+                                                        <div class="text-dark fw-bold h5 mb-0 me-3"><span>0</span></div>
                                                     </div>
                                                     <div class="col">
-                                                        <div class="progress progress-sm">
+                                                        <!-- <div class="progress progress-sm">
                                                             <div class="progress-bar bg-info" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width: 50%;"><span class="visually-hidden">50%</span></div>
-                                                        </div>
+                                                        </div> -->
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="col-auto"><i class="fas fa-clipboard-list fa-2x text-gray-300"></i></div>
+                                            <div class="col-auto"><i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i></div><!-- fa-clipboard-list -->
                                         </div>
                                     </div>
                                 </div>
@@ -183,14 +183,8 @@
                         <div class="row">
                             <div class="col-lg-6">
                                 <div class="card shadow mb-4">
-                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                    <div class="card-header py-3">
                                         <h6 class="text-primary fw-bold m-0">Results</h6>
-                                        <div class="dropdown no-arrow"><button class="btn btn-link btn-sm dropdown-toggle" aria-expanded="false" data-bs-toggle="dropdown" type="button"><i class="fas fa-ellipsis-v text-gray-400"></i></button>
-                                            <div class="dropdown-menu shadow dropdown-menu-end animated--fade-in">
-                                                <p class="text-center dropdown-header">dropdown header:</p><a class="dropdown-item" href="#">&nbsp;Action</a><a class="dropdown-item" href="#">&nbsp;Another action</a>
-                                                <div class="dropdown-divider"></div><a class="dropdown-item" href="#">&nbsp;Something else here</a>
-                                            </div>
-                                        </div>
                                     </div>
                                     <div class="card-body">
                                         <div class="chart-area"><canvas id="myChart"></canvas></div>
@@ -204,8 +198,14 @@
                             </div>
                             <div class="col-lg-6">
                                 <div class="card shadow mb-4">
-                                    <div class="card-header py-3">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
                                         <h6 class="text-primary fw-bold m-0">Jobs List</h6>
+                                        <div class="dropdown no-arrow"><button class="btn btn-link btn-sm dropdown-toggle" aria-expanded="false" data-bs-toggle="dropdown" type="button"><i class="fas fa-ellipsis-v text-gray-400"></i></button>
+                                            <div class="dropdown-menu shadow dropdown-menu-end animated--fade-in">
+                                                <p class="text-center dropdown-header">dropdown header:</p><a class="dropdown-item" href="#">&nbsp;Action</a><a class="dropdown-item" href="#">&nbsp;Another action</a>
+                                                <div class="dropdown-divider"></div><a class="dropdown-item" href="#">&nbsp;Something else here</a>
+                                            </div>
+                                        </div>
                                     </div>
                                     <ul class="list-group list-group-flush">
                                         <li class="list-group-item">
@@ -288,6 +288,10 @@
             <li class="k-separator"></li>
             <li>
                <span class="k-icon k-i-filter-add-group"></span> Scan All Cache
+            </li>
+            <li class="k-separator"></li>
+            <li>
+               <span class="k-icon k-i-gears"></span> Xpath Settings
             </li>
         </ul>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
