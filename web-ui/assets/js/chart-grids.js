@@ -104,7 +104,7 @@ $(function () {
             {
                 field: "t_username",
                 title: "Username",
-                template: "<div class='product-photo'  style='background-image: url(../assets/img/pfp/#:data.t_username#.jpg), url(../assets/img/pfp/#:data.t_username#.jpeg), url(../assets/img/pfp/#:data.t_username#.png);'></div><div class='product-name'><a href='https://twitter.com/#: t_username #' target='_blank'>#: t_username #</a></div>",
+                template: "<div class='product-photo'  style='background-image: url(../assets/img/pfp/#:data.t_username#.jpg);'></div><div class='product-name'><a href='https://twitter.com/#: t_username #' target='_blank'>#: t_username #</a></div>",
                 width: 300
             }, 
             // {
