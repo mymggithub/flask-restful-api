@@ -40,7 +40,7 @@ $(function () {
                 }
             },
             batch: true,
-            pageSize: 100,
+            pageSize: 200,
             // autoSync: true,
             // aggregate: [{
             //     field: "TotalSales",
