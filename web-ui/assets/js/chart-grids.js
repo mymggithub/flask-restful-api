@@ -76,7 +76,7 @@ $(function () {
         // editable: "incell",
         pageable: {
             refresh:true,
-            pageSizes: [10, 50, 100, 200, 500],//'all',
+            pageSizes: [10, 50, 100, 200, 500],//, 'all'
             numeric: false,
             // previousNext: true,
             // messages: {
@@ -131,14 +131,14 @@ $(function () {
                 title: "Will follow back",
                 format: "{0}%",
                 template: "<span id='chart_#= twit_id#' class='sparkline-chart'></span>",
-                template: "<div><div style='display: inline-block; width: 80%;'><div class='progress'><div class='progress-bar bg-success' aria-valuenow='#= will_f#' aria-valuemin='0' aria-valuemax='100' style='width: #= will_f#%;'>&nbsp;<span class='visually-hidden'></span></div></div></div><span> &nbsp;#= will_f#%</span></div>",
+                template: "<div><div style='display: inline-block; width: 75%;'><div class='progress'><div class='progress-bar bg-success' aria-valuenow='#= will_f#' aria-valuemin='0' aria-valuemax='100' style='width: #= will_f#%;'>&nbsp;<span class='visually-hidden'></span></div></div></div><span> &nbsp;#= will_f#%</span></div>",
                 width: 220
             }, 
             {
                 field: "wont_f",
                 title: "Wont follow back",
                 format: "{0}%",
-                template: "<div><div style='display: inline-block; width: 80%;'><div class='progress'><div class='progress-bar bg-danger' aria-valuenow='#= wont_f#' aria-valuemin='0' aria-valuemax='100' style='width: #= wont_f#%;'>&nbsp;<span class='visually-hidden'></span></div></div></div><span> &nbsp;#= wont_f#%</span></div>",
+                template: "<div><div style='display: inline-block; width: 75%;'><div class='progress'><div class='progress-bar bg-danger' aria-valuenow='#= wont_f#' aria-valuemin='0' aria-valuemax='100' style='width: #= wont_f#%;'>&nbsp;<span class='visually-hidden'></span></div></div></div><span> &nbsp;#= wont_f#%</span></div>",
                 width: 220
             },
             // { command: "destroy", title: "&nbsp;", width: 120 }
