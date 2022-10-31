@@ -61,9 +61,9 @@ class MyPlaywright:
 		response  = requests.get(url).content 
 		image_file = io.BytesIO(response)
 		image  = Image.open(image_file).convert('RGB')
-		split_tup = os.path.splitext(url);
-		show_msg( "{}/{}{}".format(self.required_folders["pfp"], filename, str(split_tup[1])) );
-		image.save("{}/{}{}".format(self.required_folders["pfp"], filename, str(split_tup[1])) , "JPEG");
+		# split_tup = os.path.splitext(url);
+		show_msg( "{}/{}.jpg".format(self.required_folders["pfp"], filename) );
+		image.save("{}/{}.jpg".format(self.required_folders["pfp"], filename));
 		show_msg("Downladed PFP");
 
 	def get_setting(self, name):
