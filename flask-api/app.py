@@ -1,11 +1,8 @@
 #!/usr/bin/python3
+import os, sys, copy, json, logging
 from flask import Flask, request, jsonify, make_response
 from flask_restful import Resource, Api, reqparse
 import mysql.connector
-import json
-import logging
-import sys
-import os
 
 if not os.path.exists("log"):
 	os.mkdir('log');
@@ -39,6 +36,25 @@ class IsOnline(Resource):
 			return make_response(jsonify({ "success":False, "status":False, "error":e, "msg":"Error loading database" }), 200);
 
 		return make_response(jsonify({ "success":True, "status":True }), 200);
+
+class Info(Resource):
+	def get(self):
+		try:
+			mydb = mysql.connector.connect(**DBconfig);
+			mycursor = mydb.cursor(dictionary=True, buffered=True);
+			mycursor.execute("SELECT COUNT(`twit_id`) AS `total`, (COUNT(`twit_id`)-COUNT(CASE WHEN `cached` = 1 AND `cached` THEN 1 END) - COUNT(CASE WHEN `skip` = 1 AND `skip` THEN 1 END)) AS `missing`, COUNT(CASE WHEN `cached` = 1 AND `cached` THEN 1 END) AS `num_cached`, COUNT(CASE WHEN `skip` = 1 AND `skip` THEN 1 END) AS `num_skipped` FROM `twitter`;");
+			myresult = mycursor.fetchone();
+			mydb.close();
+		except Exception as e:
+			logging.debug("-----{}::{}()-----".format(self.__class__.__name__,  sys._getframe().f_code.co_name));
+			logging.error(e);
+			logging.debug("-----{}::{}()-----".format(self.__class__.__name__,  sys._getframe().f_code.co_name));
+			return make_response(jsonify({ "success":False, "status":False, "error":e, "msg":"Error loading database" }), 200);
+
+		if request.args == {}:
+			return make_response(jsonify({ "status":True, 'data':myresult }), 200);
+		else:
+			return make_response('{funcname}({data})'.format( funcname=request.args.get('callback'), data=json.dumps({ "success":True, 'data':myresult }) ), 200);
 
 class UpdateWillWont(Resource):
 	def get(self):
@@ -104,7 +120,7 @@ class TwitterHomeApi(Resource):
 			mycursor.execute("SELECT * FROM `twitter` WHERE t_username LIKE '{0}'".format(t_username));
 			myresult = mycursor.fetchall();
 			if len(myresult) == 0:
-				sql_query = f"INSERT INTO twitter (`twit_id`, `proj_id`, `t_username`, `following`, `followers`, `description`, `last_tweet_id`, `last_popular_tweet_id`, `bday`) VALUES (NULL, %(proj_id)s, %(t_username)s, %(following)s, %(followers)s, %(description)s, '0', '0', %(bday)s)";
+				sql_query = f"INSERT INTO twitter (`twit_id`, `proj_id`, `t_username`, `following`, `followers`, `description`, `last_tweet_id`, `last_popular_tweet_id`, `bday`, `will_f`, `wont_f`, `cached`, `skip`) VALUES (NULL, %(proj_id)s, %(t_username)s, %(following)s, %(followers)s, %(description)s, '0', '0', %(bday)s, 0, 0, 0, 0)";
 				mycursor.execute(sql_query, {"proj_id": proj_id, "t_username": t_username, "following": following, "followers": followers, "description": desc, "bday": bday});
 				mydb.commit();
 				mydb.close();
@@ -172,7 +188,7 @@ class UpdateUsername(Resource):
 		try:
 			mydb = mysql.connector.connect(**DBconfig);
 			mycursor = mydb.cursor(dictionary=True, buffered=True);
-			sql_query = f"UPDATE `twitter` SET "+(", ".join(sql_add))+" WHERE `t_username` LIKE '{}'".format(t_username);
+			sql_query = f"UPDATE `twitter` SET "+(", ".join(sql_add))+" WHERE `t_username` LIKE '{}'; UPDATE `twitter` SET `will_f` = (CASE WHEN (`following`-`followers`) > 0 THEN FLOOR((`following`-`followers`)*(100/`following`)) ELSE 0 END), `wont_f` = (CASE WHEN (`followers`-`following`) > 0 THEN FLOOR((`followers`-`following`)*(100/`followers`)) ELSE 0 END);".format(t_username);
 			mycursor.execute(sql_query);
 			mydb.commit();
 			mydb.close();
@@ -253,8 +269,8 @@ class AddFollowers(Resource):
 			if len(t_usernames):
 				mydb = mysql.connector.connect(**DBconfig);
 				mycursor = mydb.cursor(dictionary=True, buffered=True);
-				sql_query += "INSERT IGNORE INTO `twitter` (`twit_id`, `proj_id`, `t_username`, `following`, `followers`, `description`, `last_tweet_id`, `last_popular_tweet_id`, `bday`) VALUES";
-				sql_query += str(", ".join(["(NULL, "+str(proj_id)+", '"+str(x)+"', 0, 0, '', '0', '0', '')" for x in t_usernames]));
+				sql_query += "INSERT IGNORE INTO `twitter` (`twit_id`, `proj_id`, `t_username`, `following`, `followers`, `description`, `last_tweet_id`, `last_popular_tweet_id`, `bday`, `will_f`, `wont_f`, `cached`, `skip`) VALUES";
+				sql_query += str(", ".join(["(NULL, "+str(proj_id)+", '"+str(x)+"', 0, 0, '', '0', '0', '', 0, 0, 0, 0)" for x in t_usernames]));
 				mycursor.execute(sql_query);
 				mydb.commit();
 				mydb.close();
@@ -270,6 +286,7 @@ class AddFollowers(Resource):
 
 api.add_resource(TwitterHomeApi, '/');
 api.add_resource(IsOnline, '/online/');
+api.add_resource(Info, '/info/');
 api.add_resource(FindUsername, '/find_user/<string:t_username>');
 api.add_resource(DeleteUsername, '/del_user/<string:t_username>');
 api.add_resource(UpdateUsername, '/update_user/<string:t_username>');
