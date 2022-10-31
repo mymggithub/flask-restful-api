@@ -36,7 +36,7 @@
                 vertical-align: middle;
             }
 
-            .product-photo {
+            .user-photo {
                 display: inline-block;
                 width: 32px;
                 height: 32px;
@@ -49,7 +49,7 @@
                 margin-right: 5px;
             }
 
-            .product-name {
+            .username-list {
                 display: inline-block;
                 vertical-align: middle;
                 line-height: 32px;
