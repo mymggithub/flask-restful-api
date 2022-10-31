@@ -51,5 +51,5 @@
 			else { scrollToTop.style.display = 'none'; }
 		});
 	}
-	document.querySelector('.sidebar').classList.toggle('toggled');
+	// document.querySelector('.sidebar').classList.toggle('toggled');
 })();
