@@ -85,12 +85,10 @@ class MyPlaywright:
 		mydb = mysql.connector.connect(**self.DBconfig);
 		if mydb.is_connected():
 			mycursor = mydb.cursor(dictionary=True);
-			mycursor.execute("SELECT `t_username` FROM `twitter_skip` ORDER BY `ts_id` ASC;");
+			mycursor.execute("SELECT `t_username` FROM `twitter` WHERE `skip` = 1 OR `cached` = 1 ORDER BY `twit_id` ASC;");
 			twitter_skipped = mycursor.fetchall();
-			mycursor.execute("SELECT `filename` FROM `downloaded` ORDER BY `d_id` ASC;");
-			already_downloaded = mycursor.fetchall();
 			mydb.close();
-			return [list(x.values())[0] for x in twitter_skipped] + [list(x.values())[0] for x in already_downloaded];
+			return [list(x.values())[0] for x in twitter_skipped];
 		else:
 			logging.debug("----------");
 			logging.error("MySQL Not connected");
@@ -117,7 +115,7 @@ class MyPlaywright:
 		mydb = mysql.connector.connect(**self.DBconfig);
 		if mydb.is_connected():
 			mycursor = mydb.cursor(dictionary=True, buffered=True);
-			sql_query = f"INSERT IGNORE INTO `twitter_skip` (`ts_id`, `t_username`) VALUES (NULL, %(t_username)s)";
+			sql_query = f"UPDATE `twitter` SET `skip` = 1 WHERE `t_username` = %(t_username)s;";
 			mycursor.execute(sql_query, {"t_username": username});
 			mydb.commit();
 			mydb.close();
@@ -142,22 +140,22 @@ class MyPlaywright:
 			logging.error("MySQL Not connected");
 			logging.debug("----------");
 
-	def save(self, filename):
-		if not os.path.exists("{}/{}.png".format(self.required_folders["shots"], filename)):
-			self.page.screenshot(path="{}/{}.png".format(self.required_folders["shots"], filename));
-		if not os.path.exists("{}/{}.html".format(self.required_folders["cache"], filename)):
+	def save(self, username):
+		if not os.path.exists("{}/{}.png".format(self.required_folders["shots"], username)):
+			self.page.screenshot(path="{}/{}.png".format(self.required_folders["shots"], username));
+		if not os.path.exists("{}/{}.html".format(self.required_folders["cache"], username)):
 			html_str = self.page.query_selector('html').inner_html();
-			with open("{}/{}.html".format(self.required_folders["cache"], filename), "w") as text_file:
+			with open("{}/{}.html".format(self.required_folders["cache"], username), "w") as text_file:
 				text_file.write(html_str)
 
 		mydb = mysql.connector.connect(**self.DBconfig);
 		if mydb.is_connected():
 			mycursor = mydb.cursor(dictionary=True, buffered=True);
-			sql_query = f"INSERT IGNORE INTO `downloaded` (`d_id`, `proj_id`, `filename`) VALUES (NULL, 2, %(filename)s)";
-			mycursor.execute(sql_query, {"filename": filename});
+			sql_query = f"UPDATE `twitter` SET `cached` = 1 WHERE `t_username` = %(t_username)s;";
+			mycursor.execute(sql_query, {"t_username": username});
 			mydb.commit();
 			mydb.close();
-			show_msg("{} Saved".format(filename));
+			show_msg("{} Saved".format(username));
 		else:
 			logging.debug("----------");
 			logging.error("MySQL Not connected");
