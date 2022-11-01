@@ -2,6 +2,7 @@
 import os, sys, copy, json, logging
 from flask import Flask, request, jsonify, make_response
 from flask_restful import Resource, Api, reqparse
+from flask_cors import CORS
 import mysql.connector
 
 if not os.path.exists("log"):
@@ -9,7 +10,7 @@ if not os.path.exists("log"):
 
 logging.basicConfig(filename="log/default.log");
 log = logging.getLogger('werkzeug');
-# log.setLevel(logging.ERROR);
+log.setLevel(logging.ERROR);
 
 DBconfig = {
 	"host":"mysql-db", 
@@ -19,6 +20,7 @@ DBconfig = {
 };
 
 app = Flask(__name__);
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
 api = Api(app);
 
 class IsOnline(Resource):
@@ -161,6 +163,44 @@ class DeleteUsername(Resource):
 			return make_response(jsonify({ "success":True, "msg":"Deleted" }), 201);
 		return make_response(jsonify({ "success":False, "msg":"Already Deleted" }), 200);#Already Deleted | Failed to delete
 
+class DeleteUsernames(Resource):
+	def post(self):
+		args = request.json;
+		proj_id = 1;
+		t_username = [];
+		try:
+			if "proj_id" in args:
+				proj_id = int(args["proj_id"]);
+
+			if "t_usernames" in args and type(args["t_usernames"])  == list:
+				t_usernames = [str(x) for x in args["t_usernames"]];
+
+		except Exception as e:
+			logging.debug("-----{}::{}()-----".format(self.__class__.__name__,  sys._getframe().f_code.co_name));
+			logging.info(args);
+			logging.error(e);
+			logging.debug("-----{}::{}()-----".format(self.__class__.__name__,  sys._getframe().f_code.co_name));
+			return make_response(jsonify({ "success":False, "error":e, "msg":"Error with the vars" }), 400);
+
+		sql_query = "";
+		try:
+			if len(t_usernames):
+				mydb = mysql.connector.connect(**DBconfig);
+				mycursor = mydb.cursor(dictionary=True, buffered=True);
+				sql_query += "DELETE FROM `twitter` WHERE `t_username` IN";
+				sql_query += "({})".format(", ".join(["'{}'".format(x) for x in t_usernames]));
+				mycursor.execute(sql_query);
+				mydb.commit();
+				mydb.close();
+				return make_response(jsonify({ "success":bool(mycursor.rowcount), "msg":"Deleted" }), 201);
+			return make_response(jsonify({ "success":False, "msg":"Already Deleted" }), 200);
+		except Exception as e:
+			logging.debug("-----{}::{}()-----".format(self.__class__.__name__,  sys._getframe().f_code.co_name));
+			logging.info(sql_query);
+			logging.error(e);
+			logging.debug("-----{}::{}()-----".format(self.__class__.__name__,  sys._getframe().f_code.co_name));
+			return make_response(jsonify({ "success":False, "error":str(e), "sql":sql_query, "msg":"Error with mysql" }), 400);
+
 class UpdateUsername(Resource):
 	def post(self, t_username):
 		args = request.json;
@@ -192,7 +232,7 @@ class UpdateUsername(Resource):
 		try:
 			mydb = mysql.connector.connect(**DBconfig);
 			mycursor = mydb.cursor(dictionary=True, buffered=True);
-			sql_query = f"UPDATE `twitter` SET "+(", ".join(sql_add))+" WHERE `t_username` LIKE '{}'; UPDATE `twitter` SET `will_f` = (CASE WHEN (`following`-`followers`) > 0 THEN FLOOR((`following`-`followers`)*(100/`following`)) ELSE 0 END), `wont_f` = (CASE WHEN (`followers`-`following`) > 0 THEN FLOOR((`followers`-`following`)*(100/`followers`)) ELSE 0 END);".format(t_username);
+			sql_query = f"UPDATE `twitter` SET "+(", ".join(sql_add))+" WHERE `t_username` LIKE '{}';".format(t_username);
 			mycursor.execute(sql_query);
 			mydb.commit();
 			mydb.close();
@@ -252,7 +292,7 @@ class Settings(Resource):
 class AddFollowers(Resource):
 	def post(self):
 		args = request.json;
-		proj_id = 2;
+		proj_id = 1;
 		t_username = [];
 		try:
 			if "proj_id" in args:
@@ -293,9 +333,11 @@ api.add_resource(IsOnline, '/online/');
 api.add_resource(Info, '/info/');
 api.add_resource(FindUsername, '/find_user/<string:t_username>');
 api.add_resource(DeleteUsername, '/del_user/<string:t_username>');
+api.add_resource(DeleteUsernames, '/del_users/');
 api.add_resource(UpdateUsername, '/update_user/<string:t_username>');
 api.add_resource(Settings, '/settings/');
 api.add_resource(AddFollowers, '/add_followers/');
+api.add_resource(UpdateWillWont, '/updateWillWont/');
 
 
 if __name__ == "__main__":
