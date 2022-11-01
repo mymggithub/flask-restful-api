@@ -1,7 +1,8 @@
-crudServiceBaseUrl = "http://"+window.location.host+":5000"
+var crudServiceBaseUrl = "http://"+window.location.host+":5000";
+var gridSelected = [];
 $(function () {
     var ctx = document.getElementById("myChart").getContext("2d");
-    var json_url = crudServiceBaseUrl+"/info/?callback=?";
+    var json_url = crudServiceBaseUrl+"/info";///?callback=?
 
     var myChart = new Chart(ctx, {
         type: 'doughnut',
@@ -31,7 +32,7 @@ $(function () {
         transport: {
             read: {
                 url: crudServiceBaseUrl + "/",
-                dataType: "jsonp"
+                dataType: "json"
             },
             parameterMap: function (options, operation) {
                 if (operation !== "read" && options.models) {
@@ -53,11 +54,12 @@ $(function () {
                 id: "twit_id",
                 fields: {
                     twit_id: { editable: false, nullable: true },
-                    // Discontinued: { type: "boolean", editable: false },
                     following: { type: "number" },
                     followers: { type: "number" },
                     will_f: { type: "number" },
                     wont_f: { type: "number" },
+                    cached: { type: "boolean", editable: false },
+                    // skip: { type: "number", editable: false },
                 }
             },
             data: "data"
@@ -69,16 +71,16 @@ $(function () {
         selectable: "multiple",
         persistSelection: true,
         columnMenu: {
-            filterable: false
+            filterable: true
         },
         height: 680,
         scrollable: { virtual: true },
         // editable: "incell",
         pageable: {
             refresh:true,
-            pageSizes: [10, 50, 100, 200, 500],//, 'all'
-            numeric: false,
-            // previousNext: true,
+            pageSizes: [10, 50, 100, 200, 500, 1000],//, 'all'
+            numeric: true,
+            previousNext: true,
             // messages: {
             //     display: "Showing {2} data items"
             // }
@@ -107,8 +109,14 @@ $(function () {
             {
                 field: "t_username",
                 title: "Username",
-                template: "<div class='user-photo'  style='background-image: url(../assets/img/pfp/#:data.t_username#.jpg);'></div><div class='username-list'><a href='https://twitter.com/#: t_username #' target='_blank'>#: t_username #</a></div>",
-                width: 300
+                template: function(arg) {
+                    if (arg.cached) {
+                        return "<div class='user-photo'  style='background-image: url(../assets/img/pfp/"+arg.t_username+".jpg);'></div><div class='username-list'><a href='https://twitter.com/"+arg.t_username+"' target='_blank'>"+arg.t_username+"</a></div>";
+                    }
+                    return "<div class='username-list'><a href='https://twitter.com/"+arg.t_username+"' target='_blank'>"+arg.t_username+"</a></div>";
+                },
+                width: 300,
+                filterable: {search: true} 
             }, 
             // {
             //     field: "Discontinued",
@@ -130,7 +138,6 @@ $(function () {
                 field: "will_f",
                 title: "Will follow back",
                 format: "{0}%",
-                template: "<span id='chart_#= twit_id#' class='sparkline-chart'></span>",
                 template: "<div><div style='display: inline-block; width: 75%;'><div class='progress'><div class='progress-bar bg-success' aria-valuenow='#= will_f#' aria-valuemin='0' aria-valuemax='100' style='width: #= will_f#%;'>&nbsp;<span class='visually-hidden'></span></div></div></div><span> &nbsp;#= will_f#%</span></div>",
                 width: 220
             }, 
@@ -141,17 +148,29 @@ $(function () {
                 template: "<div><div style='display: inline-block; width: 75%;'><div class='progress'><div class='progress-bar bg-danger' aria-valuenow='#= wont_f#' aria-valuemin='0' aria-valuemax='100' style='width: #= wont_f#%;'>&nbsp;<span class='visually-hidden'></span></div></div></div><span> &nbsp;#= wont_f#%</span></div>",
                 width: 220
             },
+            {
+                field: "cached",
+                title: "Cached",
+                template: function (arg) {
+                    if (arg.cached) {
+                        return "<span class='badge bg-success'>Saved</span>";
+                    }else if (arg.skip) {
+                        return "<span class='badge bg-warning text-dark'>Skipped</span>";
+                    }
+                    return "<span class='badge bg-danger'>Nope</span>";
+                },
+                width: 105,
+                filterable: { multi: true }
+            }, 
             // { command: "destroy", title: "&nbsp;", width: 120 }
         ],
     });
 });
 
 function onChange(arg) {
-    var selected = $.map(this.select(), function(item) {
+    gridSelected = $.map(this.select(), function(item) {
         return $(item).find(".username-list a").text();
     });
-
-    console.log("Selected: " + selected.length + " item(s), [" + selected.join(", ") + "]");
 }
 function onPaging(arg) {
     console.log("Paging to page index:" + arg.page);
@@ -163,8 +182,8 @@ function onDataBound(e) {
     var grid = this;
     // grid.table.find("tr").each(function () {
     //     var dataItem = grid.dataItem(this);
-    //     var themeColor = dataItem.Discontinued ? 'success' : 'error';
-    //     var text = dataItem.Discontinued ? 'Yes' : 'Nope';
+    //     var themeColor = dataItem.cached ? 'success' : 'error';
+    //     var text = dataItem.cached ? 'Yes' : 'Nope';
 
         // $(this).find(".badgeTemplate").kendoBadge({
         //     themeColor: themeColor,
@@ -242,7 +261,35 @@ function onDataBound(e) {
                     duration: 500
                 },
                 select: function(e) {
-                    // Do something on select
+                    clicked_item_classes = $(e.item).attr("class").split(/\s+/);
+                    action_index = clicked_item_classes.findIndex(element => element.includes("right-action"))
+                    if (action_index > -1) {
+                        action_name = clicked_item_classes[action_index].replace("right-action-", "");
+                    }else{ return false; }
+                    console.log(action_name);
+                    var grid = $("#grid").data("kendoGrid");
+                    switch(action_name) {
+                        case "update-fb":
+                            $.getJSON(crudServiceBaseUrl+"/updateWillWont/").done(function(response) {
+                                console.log(response);
+                                grid.dataSource.read();// $("#grid .k-pager-refresh").click()
+                            });
+                            break;
+                        case "delete-user":
+                            $.ajax({
+                                type: "POST",
+                                contentType: "application/json",
+                                url: crudServiceBaseUrl+"/del_users/",
+                                data: JSON.stringify({ t_usernames:gridSelected }),
+                                success: function(data) {
+                                    grid.dataSource.read();
+                                },
+                                dataType: "json"
+                            });
+                            break;
+                        default:
+                    }
+                    return true;
                 }
             });
         };
@@ -261,7 +308,3 @@ function ajax_chart(chart, url, data) {
         chart.resize()
     });
 }
-
-
-
-

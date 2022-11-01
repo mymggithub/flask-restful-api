@@ -276,6 +276,13 @@
 
         <ul id="menu">
             <li>
+               <span class="k-icon k-i-gears"></span> Xpath Settings
+            </li>
+            <li class="k-separator"></li>
+            <li class="right-action-scan-all"><span class="k-icon k-i-filter-add-group"></span> Scan All Cache</li>
+            <li class="right-action-update-fb"><span class="k-icon k-i-arrows-no-change"></span> Update Follow Back</li>
+            <li class="k-separator"></li>
+            <li>
                 <span class="k-icon k-i-pointer"></span> Selected Actions
                 <ul>
                     <li><span class="k-icon k-i-eye"></span> Watch</li>
@@ -283,15 +290,8 @@
                     <li><span class="k-icon k-i-heart-outline"></span> Unfollow</li>
                     <li><span class="k-icon k-i-cancel"></span> Block</li>
                     <li><span class="k-icon k-i-data-web"></span> Re-download</li>
+                    <li class="right-action-delete-user"><span class="k-icon k-i-trash"></span> Delete</li>
                 </ul>
-            </li>
-            <li class="k-separator"></li>
-            <li>
-               <span class="k-icon k-i-filter-add-group"></span> Scan All Cache
-            </li>
-            <li class="k-separator"></li>
-            <li>
-               <span class="k-icon k-i-gears"></span> Xpath Settings
             </li>
         </ul>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
