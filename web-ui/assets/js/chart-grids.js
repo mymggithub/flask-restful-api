@@ -287,6 +287,18 @@ function onDataBound(e) {
                                 dataType: "json"
                             });
                             break;
+                        case "re-download":
+                            $.ajax({
+                                type: "POST",
+                                contentType: "application/json",
+                                url: crudServiceBaseUrl+"/redownload/",
+                                data: JSON.stringify({ t_usernames:gridSelected }),
+                                success: function(data) {
+                                    grid.dataSource.read();
+                                },
+                                dataType: "json"
+                            });
+                            break;
                         default:
                     }
                     return true;
