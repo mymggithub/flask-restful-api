@@ -105,3 +105,10 @@ command: --default-authentication-plugin=mysql_native_password
 
 
 #(CASE WHEN (`following`-`followers`) > 0 THEN FLOOR((`following`-`followers`)*(100/`following`)) ELSE 0 END) as `will_f`, (CASE WHEN (`followers`-`following`) > 0 THEN FLOOR((`followers`-`following`)*(100/`followers`)) ELSE 0 END) as `wont_f`
+
+
+
+
+
+f"`description` = '%(description)s'"%{"description": desc}
+"SELECT * FROM `twitter` WHERE t_username LIKE '{0}'".format(t_username)
