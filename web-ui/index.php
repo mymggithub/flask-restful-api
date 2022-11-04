@@ -258,42 +258,45 @@
                                 <p class="text-primary m-0 fw-bold">Users Info</p>
                             </div>
                             <div class="card-body">
-                                <div id="grid"></div>
+                                <!-- <div id="grid"></div> -->
+                                <div id="appbar"></div>
+                                <div class="controls-container">
+                                    <div id="chart"></div>
+                                    <div id="grid"></div>
+                                </div>
                             </div>
                         </div> 
                             </div>
                         </div>
                     </div>
                 </div>
+                <ul id="menu" style="display: none;">
+                    <!-- <li>
+                       <span class="k-icon k-i-gears"></span> Xpath Settings
+                    </li> -->
+                    <!-- <li class="k-separator"></li> -->
+                    <li class="right-action-scan-all"><span class="k-icon k-i-filter-add-group"></span> Scan All Cache</li>
+                    <li class="right-action-update-fb"><span class="k-icon k-i-arrows-no-change"></span> Update Follow Back</li>
+                    <li class="k-separator right-select-items" style="display: none;"></li>
+                    <li class="right-select-items" style="display: none;">
+                        <span class="k-icon k-i-pointer"></span> Selected Actions
+                        <ul>
+                            <!-- <li><span class="k-icon k-i-eye"></span> Watch</li> -->
+                            <!-- <li><span class="k-icon k-i-heart"></span> Follow</li> -->
+                            <!-- <li><span class="k-icon k-i-heart-outline"></span> Unfollow</li> -->
+                            <!-- <li><span class="k-icon k-i-cancel"></span> Block</li> -->
+                            <li class="right-action-re-download"><span class="k-icon k-i-data-web"></span> Re-download</li>
+                            <li class="right-action-delete-user"><span class="k-icon k-i-trash"></span> Delete</li>
+                        </ul>
+                    </li>
+                </ul>
                 <footer class="bg-white sticky-footer">
-                    <div class="container my-auto">
-                    </div>
+                    <div class="container my-auto"></div>
                 </footer>
             </div>
             <a class="border rounded d-inline scroll-to-top" href="#page-top"><i class="fas fa-angle-up"></i></a>
 
         </div>
-
-        <ul id="menu">
-            <li>
-               <span class="k-icon k-i-gears"></span> Xpath Settings
-            </li>
-            <li class="k-separator"></li>
-            <li class="right-action-scan-all"><span class="k-icon k-i-filter-add-group"></span> Scan All Cache</li>
-            <li class="right-action-update-fb"><span class="k-icon k-i-arrows-no-change"></span> Update Follow Back</li>
-            <li class="k-separator"></li>
-            <li>
-                <span class="k-icon k-i-pointer"></span> Selected Actions
-                <ul>
-                    <li><span class="k-icon k-i-eye"></span> Watch</li>
-                    <li><span class="k-icon k-i-heart"></span> Follow</li>
-                    <li><span class="k-icon k-i-heart-outline"></span> Unfollow</li>
-                    <li><span class="k-icon k-i-cancel"></span> Block</li>
-                    <li class="right-action-re-download"><span class="k-icon k-i-data-web"></span> Re-download</li>
-                    <li class="right-action-delete-user"><span class="k-icon k-i-trash"></span> Delete</li>
-                </ul>
-            </li>
-        </ul>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js"></script>
         <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>

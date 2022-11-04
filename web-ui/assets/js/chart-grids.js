@@ -1,6 +1,8 @@
 var crudServiceBaseUrl = "http://"+window.location.host+":5000";
 var gridSelected = [];
+var is_windows = /Windows/i.test(navigator.userAgent);
 $(function () {
+
     var ctx = document.getElementById("myChart").getContext("2d");
     var json_url = crudServiceBaseUrl+"/info";///?callback=?
 
@@ -27,7 +29,7 @@ $(function () {
         }
     });
     ajax_chart(myChart, json_url);
-    $("#menu").hide();
+
     var dataSource = new kendo.data.DataSource({
         transport: {
             read: {
@@ -53,12 +55,14 @@ $(function () {
             model: {
                 id: "twit_id",
                 fields: {
-                    twit_id: { editable: false, nullable: true },
+                    twit_id: {  type: "number", editable: false, nullable: true },
                     following: { type: "number" },
                     followers: { type: "number" },
                     will_f: { type: "number" },
                     wont_f: { type: "number" },
                     cached: { type: "boolean", editable: false },
+                    description: { type: "string", editable: false },
+                    bday: { type: "string", editable: false },
                     // skip: { type: "number", editable: false },
                 }
             },
@@ -68,11 +72,13 @@ $(function () {
 
     $("#grid").kendoGrid({
         dataSource: dataSource,
-        selectable: "multiple",
-        persistSelection: true,
-        columnMenu: {
-            filterable: true
+        selectable: function() {
+            if (is_windows) {
+                return "multiple";
+            }
+            return false;
         },
+        persistSelection: true,
         height: 680,
         scrollable: { virtual: true },
         // editable: "incell",
@@ -95,6 +101,10 @@ $(function () {
         reorderable: true,
         groupable: true,
         filterable: true,
+        columnMenu: {
+            componentType: "modern",
+            filterable: true,
+        },
         dataBound: onDataBound,
         page: onPaging,
         dataBinding: onDataBinding,
@@ -104,18 +114,23 @@ $(function () {
             {
                 field: "twit_id",
                 title: "ID",
-                width: 105
+                hidden: !is_windows,
+                locked: is_windows,
+                lockable: true,
+                width: 100,
             },
             {
                 field: "t_username",
                 title: "Username",
+                locked: is_windows,
+                lockable: true,
                 template: function(arg) {
                     if (arg.cached) {
                         return "<div class='user-photo'  style='background-image: url(../assets/img/pfp/"+arg.t_username+".jpg);'></div><div class='username-list'><a href='https://twitter.com/"+arg.t_username+"' target='_blank'>"+arg.t_username+"</a></div>";
                     }
                     return "<div class='username-list'><a href='https://twitter.com/"+arg.t_username+"' target='_blank'>"+arg.t_username+"</a></div>";
                 },
-                width: 300,
+                width: 225,
                 filterable: {search: true} 
             }, 
             // {
@@ -127,11 +142,13 @@ $(function () {
             {
                 field: "following",
                 title: "Following",
+                format: "{0:n0}",
                 width: 105
             }, 
             {
                 field: "followers",
                 title: "Followers",
+                format: "{0:n0}",
                 width: 105
             }, 
             {
@@ -162,14 +179,45 @@ $(function () {
                 width: 105,
                 filterable: { multi: true }
             }, 
+            {
+                field: "description",
+                title: "Description",
+                width: 600,
+                filterable: {search: true} 
+            }, 
+            {
+                field: "bday",
+                title: "B-Day",
+                width: 100,
+            }, 
             // { command: "destroy", title: "&nbsp;", width: 120 }
         ],
     });
+
+    $("#appbar").kendoAppBar({
+        themeColor: "inherit",
+        items: [
+            { template: '<a role="button" class="k-button k-button-flat-base k-button-flat k-button-md k-rounded-md k-icon-button" href="\\#"><span class="k-button-icon k-button-icon k-icon k-i-pointer"></span> Multi Select Tool</a>', type: "contentItem" },
+        ]
+    }).on("click", ".k-button", function (e) {
+        e.preventDefault();
+        var grid = $("#grid").data("kendoGrid");
+        // grid.selectable.clear();
+        if (grid.selectable == null) {
+            grid.lockColumn("twit_id");
+            grid.setOptions({selectable:"multiple"});
+            $(".right-select-items").show();
+        }else{
+            grid.setOptions({selectable:false});
+            $(".right-select-items").hide();
+        }
+    });
+    if (is_windows) {$(".right-select-items").show();}
 });
 
 function onChange(arg) {
     gridSelected = $.map(this.select(), function(item) {
-        return $(item).find(".username-list a").text();
+        return $(item).find(".username-list a").text();//grid.getSelectedData()
     });
 }
 function onPaging(arg) {
