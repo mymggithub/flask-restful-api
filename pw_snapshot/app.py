@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import os, logging, time, random, requests
+import os, logging, time, random, requests, re
 from playwright.sync_api import sync_playwright
 import mysql.connector, io
 from lxml import html
@@ -33,25 +33,75 @@ class MyPlaywright:
 	def __init__(self, workflow_id):
 		self.workflow_id = workflow_id;
 		self.load_required_dir();
-		while self.get_setting("bio_snapshot"):
-			show_msg("Bio_snapshot: On");
-			time.sleep(1);
-			usernames_list = self.get_usernames();
-			if len(usernames_list):
-				for i,user in enumerate(usernames_list):
-					if self.get_setting("restart_bio"):
-						self.set_setting("restart_bio", False);
-						show_msg("Restarting");
-						break;
-					if user == "":
-						continue;
-					if not self.load_browser(i, usernames_list, user):
-						continue;
-					wait_time = random.randint(15, 65);
-					show_msg(f"Waiting: {wait_time} Sec");
-					time.sleep(wait_time);
-			show_msg("Done");
+		self.cache_bio();
+		# self.set_bio_data();
+		# while self.get_setting("bio_snapshot"):
+		# 	time.sleep(15);
+
 		show_msg("Quiting");
+
+	def set_bio_data(self):
+		mydb = mysql.connector.connect(**self.DBconfig);
+		if mydb.is_connected():
+			show_msg("Setting Bio Data: On");
+			time.sleep(1);
+			mycursor = mydb.cursor(dictionary=True, buffered=True);
+			mycursor.execute(f"""SELECT `t_username` FROM `twitter` WHERE `cached` = 1;""");
+			r = mycursor.fetchall();
+			sql_query = f"""SELECT `path`, `name` FROM `paths` WHERE `action`= 'value' ORDER BY `p_id` ASC;""";
+			mycursor.execute(sql_query);
+			value_paths_r =  mycursor.fetchall();
+			mydb.close();
+			cached_list = [list(x.values())[0] for x in r];
+			for username in cached_list:
+				data = {};
+				u_path = f"""{self.required_folders["cache"]}/{username}.html""";
+				show_msg(f"""{cached_list.index(username)}/{len(cached_list)} - {u_path} File exists: {os.path.exists(u_path)}""");
+				if os.path.exists(u_path):
+					root = html.parse(u_path);
+					for x in value_paths_r:
+						try:
+							x_value = root.xpath(x["path"]);
+							if len(x_value):
+								if x["name"] == "following" or x["name"] == "followers":
+									x_value = "".join(x_value);
+									x_value = re.sub("[.][0-9]{1}[K]", "{}00".format(x_value.split(".")[-1].replace("K","")), x_value); #for 17.4K or something
+									data[x["name"]] = int(x_value.replace("K", "000").replace(",", "").replace(" Following", "").replace(" Followers", ""));
+								if x["name"] == "description":
+									desc = str("".join(x_value)).encode("ascii", "ignore").decode().translate(str.maketrans({"'":"\\'"}));
+									data[x["name"]] = desc;
+							else:
+								if x["name"] == "following" or x["name"] == "followers":
+									if x["name"] not in data or data[x["name"]] == "":
+										data[x["name"]] = 0;
+								else:
+									data[x["name"]] = '';
+						except Exception as e:
+							if x["name"] == "following" or x["name"] == "followers":
+								if x["name"] not in data or data[x["name"]] == "":
+									data[x["name"]] = 0;
+							else:
+								data[x["name"]] = '';
+					try:
+						mydb = mysql.connector.connect(**self.DBconfig);
+						mycursor = mydb.cursor(dictionary=True, buffered=True);
+						sql_query = """UPDATE `twitter` SET {} WHERE `t_username` LIKE '{}';""".format(", ".join([f""" `{x}` = '%s'""" for x in data]), username);
+						show_msg(sql_query%tuple([data[x] for x in data]));
+						mycursor.execute(sql_query%tuple([data[x] for x in data]));
+						mydb.commit();
+						mydb.close();
+						# time.sleep(1);
+					except Exception as e:
+						pass
+					if bool(mycursor.rowcount):
+						show_msg(f"""{username} data updated""");
+						show_msg(data);
+						# time.sleep(1);
+
+		else:
+			logging.debug("----------");
+			logging.error("MySQL Not connected");
+			logging.debug("----------");
 
 	def load_required_dir(self):
 		for dir_var in self.required_folders:
@@ -196,6 +246,26 @@ class MyPlaywright:
 			logging.debug("----------");
 			logging.error("MySQL Not connected");
 			logging.debug("----------");
+
+	def cache_bio(self):
+		while self.get_setting("bio_snapshot"):
+			show_msg("Bio_snapshot: On");
+			time.sleep(1);
+			usernames_list = self.get_usernames();
+			if len(usernames_list):
+				for i,user in enumerate(usernames_list):
+					if self.get_setting("restart_bio"):
+						self.set_setting("restart_bio", False);
+						show_msg("Restarting");
+						break;
+					if user == "":
+						continue;
+					if not self.load_browser(i, usernames_list, user):
+						continue;
+					wait_time = random.randint(15, 35);
+					show_msg(f"Waiting: {wait_time} Sec");
+					time.sleep(wait_time);
+			show_msg("Done");
 
 	def load_browser(self, i, usernames_list, user):
 		url = "";
