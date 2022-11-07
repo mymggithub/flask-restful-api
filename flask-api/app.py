@@ -193,6 +193,44 @@ class ReDownload(Resource):
 			logging.debug(f"-----{self.__class__.__name__}::{sys._getframe().f_code.co_name}()-----");
 			return output_json({ "success":False, "error":str(e), "sql":sql_query, "msg":"Error with mysql" }, 400);
 
+class ReScan(Resource):
+	def post(self):
+		args = request.json;
+		proj_id = 1;
+		t_username = [];
+		try:
+			if "proj_id" in args:
+				proj_id = int(args["proj_id"]);
+
+			if "t_usernames" in args and type(args["t_usernames"])  == list:
+				t_usernames = [str(x) for x in args["t_usernames"]];
+
+		except Exception as e:
+			logging.debug(f"-----{self.__class__.__name__}::{sys._getframe().f_code.co_name}()-----");
+			logging.info(args);
+			logging.error(e);
+			logging.debug(f"-----{self.__class__.__name__}::{sys._getframe().f_code.co_name}()-----");
+			return output_json({ "success":False, "error":e, "msg":"Error with the vars" }, 400);
+		sql_query = "";
+		try:
+			if len(t_usernames):
+				mydb = mysql.connector.connect(**DBconfig);
+				mycursor = mydb.cursor(dictionary=True, buffered=True);
+				for username in t_usernames:
+					sql_query_tmp = f"""UPDATE `twitter` SET `updated` = 0 WHERE `t_username` LIKE '{username}';""";
+					sql_query += sql_query_tmp;
+					mycursor.execute(sql_query_tmp);
+				mydb.commit();
+				mydb.close();
+				if bool(mycursor.rowcount):
+					return output_json({ "success":True, "msg":"Rescan Activated" }, 201);
+		except Exception as e:
+			logging.debug(f"-----{self.__class__.__name__}::{sys._getframe().f_code.co_name}()-----");
+			logging.info(sql_query);
+			logging.error(e);
+			logging.debug(f"-----{self.__class__.__name__}::{sys._getframe().f_code.co_name}()-----");
+			return output_json({ "success":False, "error":str(e), "sql":sql_query, "msg":"Error with mysql" }, 400);
+
 class FindUsername(Resource):
 	def get(self, t_username):
 		sql_query = "";
@@ -418,6 +456,7 @@ api.add_resource(Settings, '/settings/');
 api.add_resource(AddFollowers, '/add_followers/');
 api.add_resource(UpdateWillWont, '/updateWillWont/');
 api.add_resource(ReDownload, '/redownload/');
+api.add_resource(ReScan, '/rescan/');
 
 
 if __name__ == "__main__":

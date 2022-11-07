@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import os, logging, time, random, requests, re
+import os, logging, time, random, requests, re, threading
 from playwright.sync_api import sync_playwright
 import mysql.connector, io
 from lxml import html
@@ -8,6 +8,13 @@ from PIL import Image
 logging.basicConfig(filename="log/default.log");
 logging.getLogger().setLevel(logging.DEBUG);
 logging.getLogger().setLevel(logging.INFO);
+
+def threaded(fn):
+    def wrapper(*args, **kwargs):
+        thread = threading.Thread(target=fn, args=args, kwargs=kwargs)
+        thread.start()
+        return thread
+    return wrapper
 
 def show_msg(msg):
 	logging.info(msg);
@@ -30,78 +37,155 @@ class MyPlaywright:
 	page = {};
 	browser = {};
 	workflow_id = 1;
-	def __init__(self, workflow_id):
-		self.workflow_id = workflow_id;
+	proj_id = 1;
+	def __init__(self, proj_id):
+		self.proj_id = proj_id;
 		self.load_required_dir();
-		self.cache_bio();
+		# self.cache_bio();
 		# self.set_bio_data();
 		# while self.get_setting("bio_snapshot"):
 		# 	time.sleep(15);
+		# t1 = threading.Thread(target=self.cache_bio).start()
+		# t2 = threading.Thread(target=self.set_bio_data).start()
 
-		show_msg("Quiting");
 
-	def set_bio_data(self):
+	def get_project(self):
 		mydb = mysql.connector.connect(**self.DBconfig);
 		if mydb.is_connected():
-			show_msg("Setting Bio Data: On");
-			time.sleep(1);
-			mycursor = mydb.cursor(dictionary=True, buffered=True);
-			mycursor.execute(f"""SELECT `t_username` FROM `twitter` WHERE `cached` = 1;""");
-			r = mycursor.fetchall();
-			sql_query = f"""SELECT `path`, `name` FROM `paths` WHERE `action`= 'value' ORDER BY `p_id` ASC;""";
-			mycursor.execute(sql_query);
-			value_paths_r =  mycursor.fetchall();
+			mycursor = mydb.cursor(dictionary=True);
+			mycursor.execute(f"""SELECT `proj_username`, `main_proj_site` FROM `project` WHERE `proj_id` = '{self.proj_id}';""");
+			r = mycursor.fetchone();
 			mydb.close();
-			cached_list = [list(x.values())[0] for x in r];
-			for username in cached_list:
-				data = {};
-				u_path = f"""{self.required_folders["cache"]}/{username}.html""";
-				show_msg(f"""{cached_list.index(username)}/{len(cached_list)} - {u_path} File exists: {os.path.exists(u_path)}""");
-				if os.path.exists(u_path):
-					root = html.parse(u_path);
-					for x in value_paths_r:
-						try:
-							x_value = root.xpath(x["path"]);
-							if len(x_value):
-								if x["name"] == "following" or x["name"] == "followers":
-									x_value = "".join(x_value);
-									x_value = re.sub("[.][0-9]{1}[K]", "{}00".format(x_value.split(".")[-1].replace("K","")), x_value); #for 17.4K or something
-									data[x["name"]] = int(x_value.replace("K", "000").replace(",", "").replace(" Following", "").replace(" Followers", ""));
-								if x["name"] == "description":
-									desc = str("".join(x_value)).encode("ascii", "ignore").decode().translate(str.maketrans({"'":"\\'"}));
-									data[x["name"]] = desc;
-							else:
+			return r;
+		else:
+			logging.debug("----------");
+			logging.error("MySQL Not connected");
+			logging.debug("----------");
+
+	@threaded
+	def account_actions(self):
+		proj = self.get_project();
+		if len(proj):
+			show_msg(proj["proj_username"]);
+			username = proj["main_proj_site"];
+			passwd = "";
+			tmp_code = "";
+			if proj["main_proj_site"] == "twitter":
+				with sync_playwright() as p:
+					self.acc_browser = p.chromium.launch();
+					self.acc_context = self.acc_browser.new_context();
+					self.acc_page = self.acc_context.new_page();
+					self.acc_page.goto('https://twitter.com/i/flow/login');
+					self.acc_page.wait_for_selector('[autocomplete="username"]');
+					self.acc_page.query_selector('[autocomplete="username"]').fill(username);
+					self.acc_page.get_by_text('Next').click();
+					self.acc_page.wait_for_selector('[type="password"]');
+					self.acc_page.query_selector('[type="password"]').fill(passwd);
+					self.acc_page.get_by_text('Log in').click();
+					time.sleep(3);
+					while self.acc_page.evaluate("""() =>  window.location.href""") != 'https://twitter.com/home' and self.acc_page.get_by_text('Enter your verification code').count():
+						self.acc_page.query_selector('[inputmode="numeric"]').fill(tmp_code);
+						self.acc_page.get_by_text('Next').click();
+						time.sleep(10);
+					self.acc_page.get_by_text('Profile').click();
+					self.acc_page.get_by_text('Following').click();
+					start_h = 0;
+					while True:
+						scroll_r = self.acc_page.evaluate("""() =>  {
+						function softScroll(elementY, duration) { 
+						  var startingY = window.pageYOffset;
+						  var diff = elementY - startingY;
+						  var start;
+						  window.requestAnimationFrame(function step(timestamp) {
+						    if (!start) start = timestamp;
+						    var time = timestamp - start;
+						    var percent = Math.min(time / duration, 1);
+						    window.scrollTo(0, startingY + diff * percent);
+						    if (time < duration) {
+						      window.requestAnimationFrame(step);
+						    }
+						  })
+						}
+						arr = [].slice.call(document.querySelectorAll('[data-testid="UserCell"] div[dir="ltr"]'))
+						usernames = arr.map(x => x.innerText.replace("@",""))
+						pos_arr = arr.map(x => (window.pageYOffset || document.documentElement.scrollTop)  - (document.documentElement.clientTop || 0)+x.getBoundingClientRect().top).sort((a,b)=> a-b)
+						last_high_num = pos_arr.slice(-1)
+						softScroll(last_high_num, 2500)
+						return {"last_height":last_high_num[0], "usernames":usernames}
+						} """);
+						time.sleep(5);
+						if scroll_r["last_height"] != start_h:
+							start_h = scroll_r["last_height"];
+						else:
+							break;
+
+
+
+	@threaded
+	def set_bio_data(self):
+		show_msg("Setting Bio Data: On");
+		while self.get_setting("get_cache_info"):
+			mydb = mysql.connector.connect(**self.DBconfig);
+			if mydb.is_connected():
+				time.sleep(60);
+				mycursor = mydb.cursor(dictionary=True, buffered=True);
+				mycursor.execute(f"""SELECT `t_username` FROM `twitter` WHERE `cached` = 1 AND  `updated` = 0;""");
+				r = mycursor.fetchall();
+				sql_query = f"""SELECT `path`, `name` FROM `paths` WHERE `action`= 'value' ORDER BY `p_id` ASC;""";
+				mycursor.execute(sql_query);
+				value_paths_r =  mycursor.fetchall();
+				mydb.close();
+				cached_list = [list(x.values())[0] for x in r];
+				for username in cached_list:
+					data = {};
+					u_path = f"""{self.required_folders["cache"]}/{username}.html""";
+					# show_msg(f"""{cached_list.index(username)}/{len(cached_list)} - {u_path} File exists: {os.path.exists(u_path)}""");
+					if os.path.exists(u_path):
+						root = html.parse(u_path);
+						for x in value_paths_r:
+							try:
+								x_value = root.xpath(x["path"]);
+								if len(x_value):
+									if x["name"] == "following" or x["name"] == "followers":
+										x_value = "".join(x_value);
+										x_value = re.sub("[.][0-9]{1}[K]", "{}00".format(x_value.split(".")[-1].replace("K","")), x_value); #for 17.4K or something
+										data[x["name"]] = int(x_value.replace("K", "000").replace(",", "").replace(" Following", "").replace(" Followers", ""));
+									if x["name"] == "description":
+										desc = str("".join(x_value)).encode("ascii", "ignore").decode().translate(str.maketrans({"'":"\\'"}));
+										data[x["name"]] = desc;
+								else:
+									if x["name"] == "following" or x["name"] == "followers":
+										if x["name"] not in data or data[x["name"]] == "":
+											data[x["name"]] = 0;
+									else:
+										data[x["name"]] = '';
+							except Exception as e:
 								if x["name"] == "following" or x["name"] == "followers":
 									if x["name"] not in data or data[x["name"]] == "":
 										data[x["name"]] = 0;
 								else:
 									data[x["name"]] = '';
+						try:
+							mydb = mysql.connector.connect(**self.DBconfig);
+							mycursor = mydb.cursor(dictionary=True, buffered=True);
+							data["updated"] = 1;
+							sql_query = """UPDATE `twitter` SET {} WHERE `t_username` LIKE '{}';""".format(", ".join([f""" `{x}` = '%s'""" for x in data]), username);
+							# show_msg(sql_query%tuple([data[x] for x in data]));
+							mycursor.execute(sql_query%tuple([data[x] for x in data]));
+							mydb.commit();
+							mydb.close();
+							# time.sleep(1);
 						except Exception as e:
-							if x["name"] == "following" or x["name"] == "followers":
-								if x["name"] not in data or data[x["name"]] == "":
-									data[x["name"]] = 0;
-							else:
-								data[x["name"]] = '';
-					try:
-						mydb = mysql.connector.connect(**self.DBconfig);
-						mycursor = mydb.cursor(dictionary=True, buffered=True);
-						sql_query = """UPDATE `twitter` SET {} WHERE `t_username` LIKE '{}';""".format(", ".join([f""" `{x}` = '%s'""" for x in data]), username);
-						show_msg(sql_query%tuple([data[x] for x in data]));
-						mycursor.execute(sql_query%tuple([data[x] for x in data]));
-						mydb.commit();
-						mydb.close();
-						# time.sleep(1);
-					except Exception as e:
-						pass
-					if bool(mycursor.rowcount):
-						show_msg(f"""{username} data updated""");
-						show_msg(data);
-						# time.sleep(1);
+							pass
+						if bool(mycursor.rowcount):
+							show_msg(f"""{cached_list.index(username)+1}/{len(cached_list)} - {username} data updated""");
+							# show_msg(data);
+							time.sleep(1);
 
-		else:
-			logging.debug("----------");
-			logging.error("MySQL Not connected");
-			logging.debug("----------");
+			else:
+				logging.debug("----------");
+				logging.error("MySQL Not connected");
+				logging.debug("----------");
 
 	def load_required_dir(self):
 		for dir_var in self.required_folders:
@@ -247,6 +331,7 @@ class MyPlaywright:
 			logging.error("MySQL Not connected");
 			logging.debug("----------");
 
+	@threaded
 	def cache_bio(self):
 		while self.get_setting("bio_snapshot"):
 			show_msg("Bio_snapshot: On");
@@ -262,7 +347,7 @@ class MyPlaywright:
 						continue;
 					if not self.load_browser(i, usernames_list, user):
 						continue;
-					wait_time = random.randint(15, 35);
+					wait_time = random.randint(30, 60);
 					show_msg(f"Waiting: {wait_time} Sec");
 					time.sleep(wait_time);
 			show_msg("Done");
@@ -302,6 +387,11 @@ if __name__ == '__main__':
 	KEEP_ALIVE = False;
 	try:
 		pw = MyPlaywright(1);
+		t1 = pw.set_bio_data();
+		t2 = pw.cache_bio();
+		t1.join();
+		t2.join();
+		show_msg("Quiting");
 	except Exception as e:
 		logging.debug("----------");
 		logging.error(e);

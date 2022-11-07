@@ -1,6 +1,7 @@
 var crudServiceBaseUrl = "http://"+window.location.host+":5000";
 var gridSelected = [];
 var is_windows = /Windows/i.test(navigator.userAgent);
+var selectable = is_windows?"multiple":false;
 $(function () {
 
     var ctx = document.getElementById("myChart").getContext("2d");
@@ -61,6 +62,7 @@ $(function () {
                     will_f: { type: "number" },
                     wont_f: { type: "number" },
                     cached: { type: "boolean", editable: false },
+                    updated: { type: "boolean", editable: false },
                     description: { type: "string", editable: false },
                     bday: { type: "string", editable: false },
                     // skip: { type: "number", editable: false },
@@ -72,12 +74,7 @@ $(function () {
 
     $("#grid").kendoGrid({
         dataSource: dataSource,
-        selectable: function() {
-            if (is_windows) {
-                return "multiple";
-            }
-            return false;
-        },
+        selectable: selectable,
         persistSelection: true,
         height: 680,
         scrollable: { virtual: true },
@@ -173,6 +170,18 @@ $(function () {
                         return "<span class='badge bg-success'>Saved</span>";
                     }else if (arg.skip) {
                         return "<span class='badge bg-warning text-dark'>Skipped</span>";
+                    }
+                    return "<span class='badge bg-danger'>Nope</span>";
+                },
+                width: 105,
+                filterable: { multi: true }
+            }, 
+            {
+                field: "updated",
+                title: "Data Updated",
+                template: function (arg) {
+                    if (arg.updated) {
+                        return "<span class='badge bg-info'>Updated</span>";
                     }
                     return "<span class='badge bg-danger'>Nope</span>";
                 },
@@ -340,6 +349,18 @@ function onDataBound(e) {
                                 type: "POST",
                                 contentType: "application/json",
                                 url: crudServiceBaseUrl+"/redownload/",
+                                data: JSON.stringify({ t_usernames:gridSelected }),
+                                success: function(data) {
+                                    grid.dataSource.read();
+                                },
+                                dataType: "json"
+                            });
+                            break;
+                        case "re-scan":
+                            $.ajax({
+                                type: "POST",
+                                contentType: "application/json",
+                                url: crudServiceBaseUrl+"/rescan/",
                                 data: JSON.stringify({ t_usernames:gridSelected }),
                                 success: function(data) {
                                     grid.dataSource.read();

@@ -285,6 +285,7 @@
                             <!-- <li><span class="k-icon k-i-heart"></span> Follow</li> -->
                             <!-- <li><span class="k-icon k-i-heart-outline"></span> Unfollow</li> -->
                             <!-- <li><span class="k-icon k-i-cancel"></span> Block</li> -->
+                            <li class="right-action-re-scan"><span class="k-icon k-i-filter-add-group"></span> Re-scan</li>
                             <li class="right-action-re-download"><span class="k-icon k-i-data-web"></span> Re-download</li>
                             <li class="right-action-delete-user"><span class="k-icon k-i-trash"></span> Delete</li>
                         </ul>
