@@ -112,3 +112,8 @@ command: --default-authentication-plugin=mysql_native_password
 
 f"`description` = '%(description)s'"%{"description": desc}
 "SELECT * FROM `twitter` WHERE t_username LIKE '{0}'".format(t_username)
+
+
+page.goto("file:/root/Desktop/__FoxyBaby__.html", wait_until="domcontentloaded");
+
+html.tostring(root, pretty_print=True)
