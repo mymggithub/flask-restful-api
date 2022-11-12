@@ -1,0 +1,6 @@
+{
+	"phpmyadmin": 9001,
+	"portainer": 9002,
+	"jupyter": 8080,
+	"api": 5000
+}

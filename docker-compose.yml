@@ -53,6 +53,7 @@ services:
     build: ./pw_snapshot
     volumes:
       - pw-log:/home/pwuser/log
+      - ${PWD}/pw_snapshot/requirements.txt:/home/pwuser/requirements.txt
       - ${PWD}/pw_snapshot/app.py:/home/pwuser/app.py
       - ${PWD}/pw_snapshot/note.sh:/home/pwuser/note.sh
       - ${PWD}/pw_snapshot/pics:/home/pwuser/pics
@@ -85,7 +86,7 @@ services:
   #     - ${PWD}/sandbox:/home/pwuser
   #   restart: always
   #   ports:
-  #     - 80:80
+  #     - 8080:8080
   #   depends_on:
   #     - mysql_db
   #   networks:
