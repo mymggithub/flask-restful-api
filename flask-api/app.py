@@ -82,6 +82,26 @@ class UpdateWillWont(Resource):
 			logging.debug(f"-----{self.__class__.__name__}::{sys._getframe().f_code.co_name}()-----");
 			return output_json({ "success":False, "status":False, "error":e, "msg":"Error loading database" }, 400);
 
+class ReScanAll(Resource):
+	def get(self):
+		sql_query = "";
+		try:
+			mydb = mysql.connector.connect(**DBconfig);
+			mycursor = mydb.cursor(dictionary=True, buffered=True);
+			sql_query = f"""UPDATE `settings` SET `settings_value` = 1 WHERE `settings_name` = 'get_cache_info';""";
+			mycursor.execute(sql_query);
+			sql_query = f"""UPDATE `twitter` SET `updated` = 0;""";
+			mycursor.execute(sql_query);
+			mydb.commit();
+			mydb.close();
+			return output_json({ "success":True, "status":True }, 200);
+		except Exception as e:
+			logging.debug(f"-----{self.__class__.__name__}::{sys._getframe().f_code.co_name}()-----");
+			logging.info(sql_query);
+			logging.error(e);
+			logging.debug(f"-----{self.__class__.__name__}::{sys._getframe().f_code.co_name}()-----");
+			return output_json({ "success":False, "status":False, "error":e, "msg":"Error loading database" }, 400);
+
 class TwitterHomeApi(Resource):
 	def get(self):
 		sql_query = "";
@@ -137,7 +157,7 @@ class TwitterHomeApi(Resource):
 			mycursor.execute(sql_query);
 			myresult = mycursor.fetchall();
 			if len(myresult) == 0:
-				sql_query_tmp = f"INSERT INTO twitter (`twit_id`, `proj_id`, `t_username`, `following`, `followers`, `description`, `last_tweet_id`, `last_popular_tweet_id`, `bday`, `will_f`, `wont_f`, `cached`, `skip`) VALUES (NULL, %(proj_id)s, %(t_username)s, %(following)s, %(followers)s, %(description)s, '0', '0', %(bday)s, 0, 0, 0, 0);";
+				sql_query_tmp = f"INSERT INTO twitter (`twit_id`, `proj_id`, `t_username`, `following`, `followers`, `description`, `last_tweet_id`, `last_popular_tweet_id`, `bday`, `location`, `link`, `blank_pfp`, `will_f`, `wont_f`, `cached`, `skip`, `updated`) VALUES (NULL, %(proj_id)s, %(t_username)s, %(following)s, %(followers)s, %(description)s, '0', '0', %(bday)s, '', '', 0, 0, 0, 0, 0, 0);";
 				sql_query += sql_query_tmp+";";
 				mycursor.execute(sql_query_tmp, {"proj_id": proj_id, "t_username": t_username, "following": following, "followers": followers, "description": desc, "bday": bday});
 				mydb.commit();
@@ -457,6 +477,7 @@ api.add_resource(AddFollowers, '/add_followers/');
 api.add_resource(UpdateWillWont, '/updateWillWont/');
 api.add_resource(ReDownload, '/redownload/');
 api.add_resource(ReScan, '/rescan/');
+api.add_resource(ReScanAll, '/rescanall/');
 
 
 if __name__ == "__main__":

@@ -275,7 +275,7 @@
                        <span class="k-icon k-i-gears"></span> Xpath Settings
                     </li> -->
                     <!-- <li class="k-separator"></li> -->
-                    <li class="right-action-scan-all"><span class="k-icon k-i-filter-add-group"></span> Scan All Cache</li>
+                    <li class="right-action-re-scan-all"><span class="k-icon k-i-filter-add-group"></span> Scan All Cache</li>
                     <li class="right-action-update-fb"><span class="k-icon k-i-arrows-no-change"></span> Update Follow Back</li>
                     <li class="k-separator right-select-items" style="display: none;"></li>
                     <li class="right-select-items" style="display: none;">

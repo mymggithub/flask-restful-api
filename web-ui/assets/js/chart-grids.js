@@ -65,6 +65,9 @@ $(function () {
                     updated: { type: "boolean", editable: false },
                     description: { type: "string", editable: false },
                     bday: { type: "string", editable: false },
+                    location: { type: "string", editable: false },
+                    link: { type: "string", editable: false },
+                    blank_pfp: { type: "boolean", editable: false },
                     // skip: { type: "number", editable: false },
                 }
             },
@@ -130,12 +133,6 @@ $(function () {
                 width: 225,
                 filterable: {search: true} 
             }, 
-            // {
-            //     field: "Discontinued",
-            //     title: "Popular",
-            //     template: "<span id='badge_#=twit_id#' class='badgeTemplate'></span>",
-            //     width: 130,
-            // }, 
             {
                 field: "following",
                 title: "Following",
@@ -178,15 +175,28 @@ $(function () {
             }, 
             {
                 field: "updated",
-                title: "Data Updated",
+                title: "Scanned",
                 template: function (arg) {
                     if (arg.updated) {
-                        return "<span class='badge bg-info'>Updated</span>";
+                        return "<span class='badge bg-info'>Scanned</span>";
                     }
                     return "<span class='badge bg-danger'>Nope</span>";
                 },
                 width: 105,
-                filterable: { multi: true }
+                filterable: { ui: boolScannedFilterTemplate  }
+            },
+            {
+                field: "blank_pfp",
+                title: "Blank",
+                template: function (arg) {
+                    if (arg.blank_pfp) {
+                        return "<span class='badge bg-danger'>Blank</span>";
+                    }else {
+                        return "<span class='badge bg-success'>Has Pic</span>";
+                    }
+                },
+                width: 105,
+                filterable: { ui: boolBlankFilterTemplate }
             }, 
             {
                 field: "description",
@@ -198,9 +208,21 @@ $(function () {
                 field: "bday",
                 title: "B-Day",
                 width: 100,
-            }, 
+            }
+            // {
+            //     field: "location",
+            //     title: "Location",
+            //     width: 300,
+            // }, 
+            // {
+            //     field: "link",
+            //     title: "Link",
+            //     width: 300,
+            // }, 
             // { command: "destroy", title: "&nbsp;", width: 120 }
         ],
+        filter: onFilter,
+        columnMenuInit: onFilterMenuInit
     });
 
     $("#appbar").kendoAppBar({
@@ -224,6 +246,51 @@ $(function () {
     if (is_windows) {$(".right-select-items").show();}
 });
 
+function boolScannedFilterTemplate(input) {
+    input.kendoDropDownList({
+        dataSource: {
+            data: [
+                { text: "Scanned", value: true },
+                { text: "Un-scanned", value: false }
+            ]
+        },
+        dataTextField: "text",
+        dataValueField: "value",
+        valuePrimitive: true,
+        optionLabel: "All"
+    });
+}
+
+function boolBlankFilterTemplate(input) {
+    input.kendoDropDownList({
+        dataSource: {
+            data: [
+                { text: "Blank", value: true },
+                { text: "Has Pic", value: false }
+            ]
+        },
+        dataTextField: "text",
+        dataValueField: "value",
+        valuePrimitive: true,
+        optionLabel: "All"
+    });
+}
+
+function onFilter(e){
+    if (e.field === "updated" || e.field === "blank_pfp") {
+        var filter = e.filter;
+        if (filter && filter.filters && filter.filters.length > 0) {
+            var filters = filter.filters;
+            filters[0].value = (filters[0].value === "true");
+        }
+    }
+}
+
+function onFilterMenuInit(e){
+    if (e.field === "updated" || e.field === "blank_pfp") {
+        e.container.find(".k-filter-help-text").text("Show items with value:");
+    }
+}
 function onChange(arg) {
     gridSelected = $.map(this.select(), function(item) {
         return $(item).find(".username-list a").text();//grid.getSelectedData()
@@ -366,6 +433,12 @@ function onDataBound(e) {
                                     grid.dataSource.read();
                                 },
                                 dataType: "json"
+                            });
+                            break;
+                        case "re-scan-all":
+                            $.getJSON(crudServiceBaseUrl+"/rescanall/").done(function(response) {
+                                console.log(response);
+                                grid.dataSource.read();// $("#grid .k-pager-refresh").click()
                             });
                             break;
                         default:
