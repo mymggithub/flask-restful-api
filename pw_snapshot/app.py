@@ -4,6 +4,8 @@ from playwright.sync_api import sync_playwright
 import mysql.connector, io
 from lxml import html
 from PIL import Image
+from PIL import ImageChops
+
 
 logging.basicConfig(filename="log/default.log");
 logging.getLogger().setLevel(logging.DEBUG);
@@ -27,7 +29,8 @@ class MyPlaywright:
 		"pics":"pics",
 		"shots":"pics/shots",
 		"pfp":"pics/pfp",
-		"cache":"cache"
+		"test_with":"pics/test_with",
+		"cache":"cache",
 	};
 	ua = (
 		"Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -44,7 +47,7 @@ class MyPlaywright:
 		# self.cache_bio();
 		# self.set_bio_data();
 		# while self.get_setting("bio_snapshot"):
-		# 	time.sleep(15);
+		# 	time.sleep(60);
 		# t1 = threading.Thread(target=self.cache_bio).start()
 		# t2 = threading.Thread(target=self.set_bio_data).start()
 
@@ -123,11 +126,12 @@ class MyPlaywright:
 
 	@threaded
 	def set_bio_data(self):
-		show_msg("Setting Bio Data: On");
 		while self.get_setting("get_cache_info"):
+			# show_msg("Setting Bio Data: Loading");
 			mydb = mysql.connector.connect(**self.DBconfig);
 			if mydb.is_connected():
-				time.sleep(60);
+				show_msg("Setting Bio Data: On");
+				time.sleep(1);
 				mycursor = mydb.cursor(dictionary=True, buffered=True);
 				mycursor.execute(f"""SELECT `t_username` FROM `twitter` WHERE `cached` = 1 AND  `updated` = 0;""");
 				r = mycursor.fetchall();
@@ -136,10 +140,19 @@ class MyPlaywright:
 				value_paths_r =  mycursor.fetchall();
 				mydb.close();
 				cached_list = [list(x.values())[0] for x in r];
+				show_msg(f"Number of data to set: {len(cached_list)}");
 				for username in cached_list:
 					data = {};
+					blank_pfp = f"""{self.required_folders["test_with"]}/blank_pfp.jpg""";
+					u_pfp = f"""{self.required_folders["pfp"]}/{username}.jpg""";
+					data["blank_pfp"] = 1;
+					if os.path.exists(u_pfp):
+						image_one = Image.open(u_pfp);
+						image_two = Image.open(blank_pfp);
+						diff = ImageChops.difference(image_one, image_two);
+						data["blank_pfp"] = 1 if not bool(diff.getbbox()) else 0;
 					u_path = f"""{self.required_folders["cache"]}/{username}.html""";
-					# show_msg(f"""{cached_list.index(username)}/{len(cached_list)} - {u_path} File exists: {os.path.exists(u_path)}""");
+					show_msg(f"""{cached_list.index(username)}/{len(cached_list)} - {u_path} File exists: {os.path.exists(u_path)}""");
 					if os.path.exists(u_path):
 						root = html.parse(u_path);
 						for x in value_paths_r:
@@ -334,8 +347,8 @@ class MyPlaywright:
 	@threaded
 	def cache_bio(self):
 		while self.get_setting("bio_snapshot"):
-			show_msg("Bio_snapshot: On");
 			time.sleep(1);
+			# show_msg("Bio_snapshot: On");
 			usernames_list = self.get_usernames();
 			if len(usernames_list):
 				for i,user in enumerate(usernames_list):
@@ -387,8 +400,8 @@ if __name__ == '__main__':
 	KEEP_ALIVE = False;
 	try:
 		pw = MyPlaywright(1);
-		t1 = pw.set_bio_data();
-		t2 = pw.cache_bio();
+		t1 = pw.cache_bio();
+		t2 = pw.set_bio_data();
 		t1.join();
 		t2.join();
 		show_msg("Quiting");
