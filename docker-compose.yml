@@ -38,6 +38,7 @@ services:
     volumes:
       - api-log:/opt/source-code/log
       - ${PWD}/flask-api/app.py:/opt/source-code/app.py
+      - ${PWD}/./config/:/opt/source-code/config/
     restart: always
     ports:
       - 5000:5000
@@ -56,6 +57,7 @@ services:
       - ${PWD}/pw_snapshot/note.sh:/home/pwuser/note.sh
       - ${PWD}/pw_snapshot/pics:/home/pwuser/pics
       - ${PWD}/pw_snapshot/cache:/home/pwuser/cache
+      - ${PWD}/./config/:/home/pwuser/config/
     restart: always
     ports:
       - 8888:8888

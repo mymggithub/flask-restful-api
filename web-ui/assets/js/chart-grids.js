@@ -62,7 +62,7 @@ $(function () {
                     will_f: { type: "number" },
                     wont_f: { type: "number" },
                     cached: { type: "boolean", editable: false },
-                    updated: { type: "boolean", editable: false },
+                    scanned: { type: "boolean", editable: false },
                     description: { type: "string", editable: false },
                     bday: { type: "string", editable: false },
                     location: { type: "string", editable: false },
@@ -174,10 +174,10 @@ $(function () {
                 filterable: { multi: true }
             }, 
             {
-                field: "updated",
+                field: "scanned",
                 title: "Scanned",
                 template: function (arg) {
-                    if (arg.updated) {
+                    if (arg.scanned) {
                         return "<span class='badge bg-info'>Scanned</span>";
                     }
                     return "<span class='badge bg-danger'>Nope</span>";
@@ -277,7 +277,7 @@ function boolBlankFilterTemplate(input) {
 }
 
 function onFilter(e){
-    if (e.field === "updated" || e.field === "blank_pfp") {
+    if (e.field === "scanned" || e.field === "blank_pfp") {
         var filter = e.filter;
         if (filter && filter.filters && filter.filters.length > 0) {
             var filters = filter.filters;
@@ -287,7 +287,7 @@ function onFilter(e){
 }
 
 function onFilterMenuInit(e){
-    if (e.field === "updated" || e.field === "blank_pfp") {
+    if (e.field === "scanned" || e.field === "blank_pfp") {
         e.container.find(".k-filter-help-text").text("Show items with value:");
     }
 }

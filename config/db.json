@@ -1,0 +1,6 @@
+{
+	"host":"mysql-db", 
+	"user":"root", 
+	"passwd":"pass123word",
+	"database":"yiiadv"
+}

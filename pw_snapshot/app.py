@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import os, logging, time, random, requests, re, threading
+import os, logging, time, random, requests, re, threading, json
 from playwright.sync_api import sync_playwright
 import mysql.connector, io
 from lxml import html
@@ -23,7 +23,7 @@ def show_msg(msg):
 	print(msg, flush=True);
 
 class MyPlaywright:
-	DBconfig = { "host":"mysql-db", "user":"root", "passwd":"pass123word", "database":"yiiadv" };
+	DBconfig = {};
 	required_folders = {
 		"log":"log",
 		"pics":"pics",
@@ -42,6 +42,9 @@ class MyPlaywright:
 	workflow_id = 1;
 	proj_id = 1;
 	def __init__(self, proj_id):
+		if os.path.exists("config/db.json"):
+			self.DBconfig = json.load(open('config/db.json'));
+
 		self.proj_id = proj_id;
 		self.load_required_dir();
 		# self.cache_bio();
@@ -133,7 +136,7 @@ class MyPlaywright:
 				show_msg("Setting Bio Data: On");
 				time.sleep(1);
 				mycursor = mydb.cursor(dictionary=True, buffered=True);
-				mycursor.execute(f"""SELECT `t_username` FROM `twitter` WHERE `cached` = 1 AND  `updated` = 0;""");
+				mycursor.execute(f"""SELECT `t_username` FROM `twitter` WHERE `cached` = 1 AND  `scanned` = 0;""");
 				r = mycursor.fetchall();
 				sql_query = f"""SELECT `path`, `name` FROM `paths` WHERE `action`= 'value' ORDER BY `p_id` ASC;""";
 				mycursor.execute(sql_query);
@@ -181,7 +184,7 @@ class MyPlaywright:
 						try:
 							mydb = mysql.connector.connect(**self.DBconfig);
 							mycursor = mydb.cursor(dictionary=True, buffered=True);
-							data["updated"] = 1;
+							data["scanned"] = 1;
 							sql_query = """UPDATE `twitter` SET {} WHERE `t_username` LIKE '{}';""".format(", ".join([f""" `{x}` = '%s'""" for x in data]), username);
 							# show_msg(sql_query%tuple([data[x] for x in data]));
 							mycursor.execute(sql_query%tuple([data[x] for x in data]));
@@ -191,7 +194,7 @@ class MyPlaywright:
 						except Exception as e:
 							pass
 						if bool(mycursor.rowcount):
-							show_msg(f"""{cached_list.index(username)+1}/{len(cached_list)} - {username} data updated""");
+							show_msg(f"""{cached_list.index(username)+1}/{len(cached_list)} - {username} data scanned""");
 							# show_msg(data);
 							time.sleep(1);
 

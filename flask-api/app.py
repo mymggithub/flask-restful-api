@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import os, sys, copy, json, logging
+import os, sys, copy, json, logging, json
 from flask import Flask, request, jsonify, make_response
 from flask_restful import Resource, Api, reqparse
 from flask_cors import CORS
@@ -12,12 +12,9 @@ logging.basicConfig(filename="log/default.log");
 log = logging.getLogger('werkzeug');
 log.setLevel(logging.ERROR);
 
-DBconfig = {
-	"host":"mysql-db", 
-	"user":"root", 
-	"passwd":"pass123word",
-	"database":"yiiadv"
-};
+DBconfig = {};
+if os.path.exists("config/db.json"):
+	DBconfig = json.load(open('config/db.json'));
 
 app = Flask(__name__);
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
@@ -90,7 +87,7 @@ class ReScanAll(Resource):
 			mycursor = mydb.cursor(dictionary=True, buffered=True);
 			sql_query = f"""UPDATE `settings` SET `settings_value` = 1 WHERE `settings_name` = 'get_cache_info';""";
 			mycursor.execute(sql_query);
-			sql_query = f"""UPDATE `twitter` SET `updated` = 0;""";
+			sql_query = f"""UPDATE `twitter` SET `scanned` = 0;""";
 			mycursor.execute(sql_query);
 			mydb.commit();
 			mydb.close();
@@ -157,7 +154,7 @@ class TwitterHomeApi(Resource):
 			mycursor.execute(sql_query);
 			myresult = mycursor.fetchall();
 			if len(myresult) == 0:
-				sql_query_tmp = f"INSERT INTO twitter (`twit_id`, `proj_id`, `t_username`, `following`, `followers`, `description`, `last_tweet_id`, `last_popular_tweet_id`, `bday`, `location`, `link`, `blank_pfp`, `will_f`, `wont_f`, `cached`, `skip`, `updated`) VALUES (NULL, %(proj_id)s, %(t_username)s, %(following)s, %(followers)s, %(description)s, '0', '0', %(bday)s, '', '', 0, 0, 0, 0, 0, 0);";
+				sql_query_tmp = f"INSERT INTO twitter (`twit_id`, `proj_id`, `t_username`, `following`, `followers`, `description`, `last_tweet_id`, `last_popular_tweet_id`, `bday`, `location`, `link`, `blank_pfp`, `will_f`, `wont_f`, `cached`, `skip`, `scanned`) VALUES (NULL, %(proj_id)s, %(t_username)s, %(following)s, %(followers)s, %(description)s, '0', '0', %(bday)s, '', '', 0, 0, 0, 0, 0, 0);";
 				sql_query += sql_query_tmp+";";
 				mycursor.execute(sql_query_tmp, {"proj_id": proj_id, "t_username": t_username, "following": following, "followers": followers, "description": desc, "bday": bday});
 				mydb.commit();
@@ -237,7 +234,7 @@ class ReScan(Resource):
 				mydb = mysql.connector.connect(**DBconfig);
 				mycursor = mydb.cursor(dictionary=True, buffered=True);
 				for username in t_usernames:
-					sql_query_tmp = f"""UPDATE `twitter` SET `updated` = 0 WHERE `t_username` LIKE '{username}';""";
+					sql_query_tmp = f"""UPDATE `twitter` SET `scanned` = 0 WHERE `t_username` LIKE '{username}';""";
 					sql_query += sql_query_tmp;
 					mycursor.execute(sql_query_tmp);
 				mydb.commit();
