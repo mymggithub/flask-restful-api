@@ -49,7 +49,7 @@ class Info(Resource):
 		try:
 			mydb = mysql.connector.connect(**DBconfig);
 			mycursor = mydb.cursor(dictionary=True, buffered=True);
-			sql_query = f"""SELECT COUNT(`twit_id`) AS `total`, (COUNT(`twit_id`)-COUNT(CASE WHEN `cached` = 1 AND `cached` THEN 1 END) - COUNT(CASE WHEN `skip` = 1 AND `skip` THEN 1 END)) AS `missing`, COUNT(CASE WHEN `cached` = 1 AND `cached` THEN 1 END) AS `num_cached`, COUNT(CASE WHEN `skip` = 1 AND `skip` THEN 1 END) AS `num_skipped` FROM `twitter`;""";
+			sql_query = f"""SELECT COUNT(`twit_id`) AS `total`, (COUNT(`twit_id`)-COUNT(CASE WHEN `cached` = 1 AND `cached` THEN 1 END) - COUNT(CASE WHEN `skip` = 1 AND `skip` THEN 1 END)) AS `missing`, COUNT(CASE WHEN `cached` = 1 AND `cached` THEN 1 END) AS `num_cached`, COUNT(CASE WHEN `skip` = 1 AND `skip` THEN 1 END) AS `num_skipped` FROM `proj_data`;""";
 			mycursor.execute(sql_query);
 			myresult = mycursor.fetchone();
 			mydb.close();
@@ -67,7 +67,7 @@ class UpdateWillWont(Resource):
 		try:
 			mydb = mysql.connector.connect(**DBconfig);
 			mycursor = mydb.cursor(dictionary=True, buffered=True);
-			sql_query = f"""UPDATE `twitter` SET `will_f` = (CASE WHEN (`following`-`followers`) > 0 THEN FLOOR((`following`-`followers`)*(100/`following`)) ELSE 0 END), `wont_f` = (CASE WHEN (`followers`-`following`) > 0 THEN FLOOR((`followers`-`following`)*(100/`followers`)) ELSE 0 END);""";
+			sql_query = f"""UPDATE `proj_data` SET `will_f` = (CASE WHEN (`following`-`followers`) > 0 THEN FLOOR((`following`-`followers`)*(100/`following`)) ELSE 0 END), `wont_f` = (CASE WHEN (`followers`-`following`) > 0 THEN FLOOR((`followers`-`following`)*(100/`followers`)) ELSE 0 END);""";
 			mycursor.execute(sql_query);
 			mydb.commit();
 			mydb.close();
@@ -87,7 +87,7 @@ class ReScanAll(Resource):
 			mycursor = mydb.cursor(dictionary=True, buffered=True);
 			sql_query = f"""UPDATE `settings` SET `settings_value` = 1 WHERE `settings_name` = 'get_cache_info';""";
 			mycursor.execute(sql_query);
-			sql_query = f"""UPDATE `twitter` SET `scanned` = 0;""";
+			sql_query = f"""UPDATE `proj_data` SET `scanned` = 0;""";
 			mycursor.execute(sql_query);
 			mydb.commit();
 			mydb.close();
@@ -99,7 +99,7 @@ class ReScanAll(Resource):
 			logging.debug(f"-----{self.__class__.__name__}::{sys._getframe().f_code.co_name}()-----");
 			return output_json({ "success":False, "status":False, "error":e, "msg":"Error loading database" }, 400);
 
-class TwitterHomeApi(Resource):
+class ProjHomeApi(Resource):
 	def get(self):
 		sql_query = "";
 		try:
@@ -108,7 +108,7 @@ class TwitterHomeApi(Resource):
 			if 'start' in request.args and 'offset' in request.args:
 				limit = f"""LIMIT {int(request.args.get('offset'))} OFFSET {int(request.args.get('start'))}""";
 			mycursor = mydb.cursor(dictionary=True, buffered=True);
-			sql_query = f"""SELECT * FROM `twitter` {limit};""";
+			sql_query = f"""SELECT * FROM `proj_data` {limit};""";
 			mycursor.execute(sql_query);
 			myresult = mycursor.fetchall();
 			mydb.close();
@@ -150,7 +150,7 @@ class TwitterHomeApi(Resource):
 		try:
 			mydb = mysql.connector.connect(**DBconfig);
 			mycursor = mydb.cursor(dictionary=True, buffered=True);
-			sql_query += f"""SELECT * FROM `twitter` WHERE `t_username` LIKE '{t_username}';""";
+			sql_query += f"""SELECT * FROM `proj_data` WHERE `t_username` LIKE '{t_username}';""";
 			mycursor.execute(sql_query);
 			myresult = mycursor.fetchall();
 			if len(myresult) == 0:
@@ -193,7 +193,7 @@ class ReDownload(Resource):
 				mydb = mysql.connector.connect(**DBconfig);
 				mycursor = mydb.cursor(dictionary=True, buffered=True);
 				for username in t_usernames:
-					sql_query_tmp = f"""UPDATE `twitter` SET `cached` = 0, `skip` = 0 WHERE `t_username` LIKE '{username}';""";
+					sql_query_tmp = f"""UPDATE `proj_data` SET `cached` = 0, `skip` = 0 WHERE `t_username` LIKE '{username}';""";
 					sql_query += sql_query_tmp;
 					mycursor.execute(sql_query_tmp);
 				sql_query_tmp = f"""UPDATE `settings` SET `settings_value` = 1 WHERE `settings_name` = 'restart_bio';""";
@@ -234,7 +234,7 @@ class ReScan(Resource):
 				mydb = mysql.connector.connect(**DBconfig);
 				mycursor = mydb.cursor(dictionary=True, buffered=True);
 				for username in t_usernames:
-					sql_query_tmp = f"""UPDATE `twitter` SET `scanned` = 0 WHERE `t_username` LIKE '{username}';""";
+					sql_query_tmp = f"""UPDATE `proj_data` SET `scanned` = 0 WHERE `t_username` LIKE '{username}';""";
 					sql_query += sql_query_tmp;
 					mycursor.execute(sql_query_tmp);
 				mydb.commit();
@@ -254,7 +254,7 @@ class FindUsername(Resource):
 		try:
 			mydb = mysql.connector.connect(**DBconfig);
 			mycursor = mydb.cursor(dictionary=True, buffered=True);
-			sql_query = f"""SELECT * FROM `twitter` WHERE t_username LIKE '{t_username}';""";
+			sql_query = f"""SELECT * FROM `proj_data` WHERE t_username LIKE '{t_username}';""";
 			mycursor.execute(sql_query);
 			myresult = mycursor.fetchall();
 			mydb.close();
@@ -274,7 +274,7 @@ class DeleteUsername(Resource):
 		try:
 			mydb = mysql.connector.connect(**DBconfig);
 			mycursor = mydb.cursor(dictionary=True, buffered=True);
-			sql_query = f"""DELETE FROM `twitter` WHERE t_username LIKE '{t_username}';""";
+			sql_query = f"""DELETE FROM `proj_data` WHERE t_username LIKE '{t_username}';""";
 			mycursor.execute(sql_query);
 			mydb.commit();
 			mydb.close();
@@ -312,7 +312,7 @@ class DeleteUsernames(Resource):
 			if len(t_usernames):
 				mydb = mysql.connector.connect(**DBconfig);
 				mycursor = mydb.cursor(dictionary=True, buffered=True);
-				sql_query += "DELETE FROM `twitter` WHERE `t_username` IN";
+				sql_query += "DELETE FROM `proj_data` WHERE `t_username` IN";
 				sql_query += "({})".format(", ".join(["'{}'".format(x) for x in t_usernames]));
 				mycursor.execute(sql_query);
 				mydb.commit();
@@ -355,7 +355,7 @@ class UpdateUsername(Resource):
 		try:
 			mydb = mysql.connector.connect(**DBconfig);
 			mycursor = mydb.cursor(dictionary=True, buffered=True);
-			sql_query = "UPDATE `twitter` SET {} WHERE `t_username` LIKE '{}';".format(", ".join(sql_add), t_username);
+			sql_query = "UPDATE `proj_data` SET {} WHERE `t_username` LIKE '{}';".format(", ".join(sql_add), t_username);
 			mycursor.execute(sql_query);
 			mydb.commit();
 			mydb.close();
@@ -446,7 +446,7 @@ class AddFollowers(Resource):
 			if len(t_usernames):
 				mydb = mysql.connector.connect(**DBconfig);
 				mycursor = mydb.cursor(dictionary=True, buffered=True);
-				sql_query += "INSERT IGNORE INTO `twitter` (`twit_id`, `proj_id`, `t_username`, `following`, `followers`, `description`, `last_tweet_id`, `last_popular_tweet_id`, `bday`, `will_f`, `wont_f`, `cached`, `skip`) VALUES";
+				sql_query += "INSERT IGNORE INTO `proj_data` (`twit_id`, `proj_id`, `t_username`, `following`, `followers`, `description`, `last_tweet_id`, `last_popular_tweet_id`, `bday`, `will_f`, `wont_f`, `cached`, `skip`) VALUES";
 				sql_query += str(", ".join(["(NULL, "+str(proj_id)+", '"+str(x)+"', 0, 0, '', '0', '0', '', 0, 0, 0, 0)" for x in t_usernames]));
 				mycursor.execute(sql_query);
 				mydb.commit();
@@ -462,7 +462,27 @@ class AddFollowers(Resource):
 			return output_json({ "success":False, "error":str(e), "sql":sql_query, "msg":"Error with mysql" }, 400);
 			# return Response(str(e), status=status.HTTP_404_NOT_FOUND, template_name=None, content_type=None)
 
-api.add_resource(TwitterHomeApi, '/');
+
+
+class Projects(Resource):
+	def get(self):
+		sql_query = "";
+		try:
+			mydb = mysql.connector.connect(**DBconfig);
+			mycursor = mydb.cursor(dictionary=True, buffered=True);
+			sql_query = f"""SELECT `proj_id`, `proj_username`, `main_proj_site` FROM `project`;""";
+			mycursor.execute(sql_query);
+			myresult = mycursor.fetchone();
+			mydb.close();
+			return output_json({ "status":True, 'data':myresult }, 200);
+		except Exception as e:
+			logging.debug(f"-----{self.__class__.__name__}::{sys._getframe().f_code.co_name}()-----");
+			logging.info(sql_query);
+			logging.error(e);
+			logging.debug(f"-----{self.__class__.__name__}::{sys._getframe().f_code.co_name}()-----");
+			return output_json({ "success":False, "status":False, "error":e, "msg":"Error loading database" }, 400);
+
+api.add_resource(ProjHomeApi, '/');
 api.add_resource(IsOnline, '/online/');
 api.add_resource(Info, '/info/');
 api.add_resource(FindUsername, '/find_user/<string:t_username>');
@@ -475,6 +495,7 @@ api.add_resource(UpdateWillWont, '/updateWillWont/');
 api.add_resource(ReDownload, '/redownload/');
 api.add_resource(ReScan, '/rescan/');
 api.add_resource(ReScanAll, '/rescanall/');
+api.add_resource(Projects, '/projects/');
 
 
 if __name__ == "__main__":

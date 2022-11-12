@@ -136,7 +136,7 @@ class MyPlaywright:
 				show_msg("Setting Bio Data: On");
 				time.sleep(1);
 				mycursor = mydb.cursor(dictionary=True, buffered=True);
-				mycursor.execute(f"""SELECT `t_username` FROM `twitter` WHERE `cached` = 1 AND  `scanned` = 0;""");
+				mycursor.execute(f"""SELECT `t_username` FROM `proj_data` WHERE `cached` = 1 AND  `scanned` = 0;""");
 				r = mycursor.fetchall();
 				sql_query = f"""SELECT `path`, `name` FROM `paths` WHERE `action`= 'value' ORDER BY `p_id` ASC;""";
 				mycursor.execute(sql_query);
@@ -185,7 +185,7 @@ class MyPlaywright:
 							mydb = mysql.connector.connect(**self.DBconfig);
 							mycursor = mydb.cursor(dictionary=True, buffered=True);
 							data["scanned"] = 1;
-							sql_query = """UPDATE `twitter` SET {} WHERE `t_username` LIKE '{}';""".format(", ".join([f""" `{x}` = '%s'""" for x in data]), username);
+							sql_query = """UPDATE `proj_data` SET {} WHERE `t_username` LIKE '{}';""".format(", ".join([f""" `{x}` = '%s'""" for x in data]), username);
 							# show_msg(sql_query%tuple([data[x] for x in data]));
 							mycursor.execute(sql_query%tuple([data[x] for x in data]));
 							mydb.commit();
@@ -256,7 +256,7 @@ class MyPlaywright:
 		mydb = mysql.connector.connect(**self.DBconfig);
 		if mydb.is_connected():
 			mycursor = mydb.cursor(dictionary=True);
-			mycursor.execute(f"""SELECT `t_username` FROM `twitter` WHERE `skip` = 1 OR `cached` = 1 ORDER BY `twit_id` ASC;""");
+			mycursor.execute(f"""SELECT `t_username` FROM `proj_data` WHERE `skip` = 1 OR `cached` = 1 ORDER BY `twit_id` ASC;""");
 			twitter_skipped = mycursor.fetchall();
 			mydb.close();
 			return [list(x.values())[0] for x in twitter_skipped];
@@ -273,7 +273,7 @@ class MyPlaywright:
 		mydb = mysql.connector.connect(**self.DBconfig);
 		if mydb.is_connected():
 			mycursor = mydb.cursor(dictionary=True);
-			mycursor.execute(f"""SELECT `t_username` FROM `twitter` {sql_not} ORDER BY `twit_id` ASC;""");
+			mycursor.execute(f"""SELECT `t_username` FROM `proj_data` {sql_not} ORDER BY `twit_id` ASC;""");
 			r = mycursor.fetchall();
 			mydb.close();
 			return [list(x.values())[0] for x in r];
@@ -286,7 +286,7 @@ class MyPlaywright:
 		mydb = mysql.connector.connect(**self.DBconfig);
 		if mydb.is_connected():
 			mycursor = mydb.cursor(dictionary=True, buffered=True);
-			sql_query = f"UPDATE `twitter` SET `skip` = 1 WHERE `t_username` = %(t_username)s;";
+			sql_query = f"UPDATE `proj_data` SET `skip` = 1 WHERE `t_username` = %(t_username)s;";
 			mycursor.execute(sql_query, {"t_username": username});
 			mydb.commit();
 			mydb.close();
@@ -322,7 +322,7 @@ class MyPlaywright:
 		mydb = mysql.connector.connect(**self.DBconfig);
 		if mydb.is_connected():
 			mycursor = mydb.cursor(dictionary=True, buffered=True);
-			sql_query = f"""UPDATE `twitter` SET `cached` = 1 WHERE `t_username` = %(t_username)s;""";
+			sql_query = f"""UPDATE `proj_data` SET `cached` = 1 WHERE `t_username` = %(t_username)s;""";
 			mycursor.execute(sql_query, {"t_username": username});
 			mydb.commit();
 			mydb.close();
