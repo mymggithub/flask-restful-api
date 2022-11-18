@@ -1,0 +1,4 @@
+mysql-connector==2.2.9
+flask==2.2.2
+flask-restful==0.3.9
+flask-cors==3.0.10
