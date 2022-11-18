@@ -1,7 +1,9 @@
 #!/usr/bin/python
 import os, logging, time, random, requests, re, threading, json
 from playwright.sync_api import sync_playwright
-import mysql.connector, io
+import mysql.connector, io, cv2
+import pytesseract as pyt
+from pytesseract import Output
 from lxml import html
 from PIL import Image
 from PIL import ImageChops
@@ -30,6 +32,7 @@ class MyPlaywright:
 		"shots":"pics/shots",
 		"pfp":"pics/pfp",
 		"test_with":"pics/test_with",
+		"hooks":"pics/hooks",
 		"cache":"cache",
 	};
 	ua = (
@@ -166,7 +169,7 @@ class MyPlaywright:
 										x_value = "".join(x_value);
 										x_value = re.sub("[.][0-9]{1}[K]", "{}00".format(x_value.split(".")[-1].replace("K","")), x_value); #for 17.4K or something
 										data[x["name"]] = int(x_value.replace("K", "000").replace(",", "").replace(" Following", "").replace(" Followers", ""));
-									if x["name"] == "description":
+									else: #if x["name"] == "description":
 										desc = str("".join(x_value)).encode("ascii", "ignore").decode().translate(str.maketrans({"'":"\\'"}));
 										data[x["name"]] = desc;
 								else:
@@ -182,6 +185,16 @@ class MyPlaywright:
 								else:
 									data[x["name"]] = '';
 						try:
+							for k in data:
+								if data[k] == "":
+									val = self.get_cv_hooks_data(k, username);
+									if val:
+										xpath = self.get_lxml_xpath(username, val);
+										if xpath:
+											elem_arr = root.xpath(xpath+"/text()");
+											if len(elem_arr) and len(elem_arr[0]) < 249:
+												data[k] = elem_arr[0];
+							
 							mydb = mysql.connector.connect(**self.DBconfig);
 							mycursor = mydb.cursor(dictionary=True, buffered=True);
 							data["scanned"] = 1;
@@ -192,7 +205,7 @@ class MyPlaywright:
 							mydb.close();
 							# time.sleep(1);
 						except Exception as e:
-							pass
+							show_msg(e)
 						if bool(mycursor.rowcount):
 							show_msg(f"""{cached_list.index(username)+1}/{len(cached_list)} - {username} data scanned""");
 							# show_msg(data);
@@ -347,6 +360,66 @@ class MyPlaywright:
 			logging.error("MySQL Not connected");
 			logging.debug("----------");
 
+	def get_cv_hooks_data(self, name, username):
+		sql_query = "";
+		mydb = mysql.connector.connect(**self.DBconfig);
+		if mydb.is_connected():
+			mycursor = mydb.cursor(dictionary=True, buffered=True);
+			sql_query = f"""SELECT `filename`, `data_pos` FROM `hooks` WHERE `name` = '{name}';""";
+			mycursor.execute(sql_query);
+			r =  mycursor.fetchone();
+			mydb.close();
+			if r is not None:
+				hooks_path = f"""{self.required_folders["hooks"]}/{r["filename"]}""";
+				u_path = f"""{self.required_folders["shots"]}/{username}.png""";
+				if os.path.exists(hooks_path) and  os.path.exists(u_path):
+					needle_img = cv2.imread(hooks_path, cv2.IMREAD_UNCHANGED);
+					map_img = cv2.imread(u_path, cv2.IMREAD_UNCHANGED);
+					original_img = cv2.imread(u_path);
+					r = cv2.matchTemplate(map_img, needle_img, cv2.TM_CCOEFF_NORMED);
+					start_point = cv2.minMaxLoc(r)[-1];
+					show_msg(f"""{cv2.minMaxLoc(r)[1]*100}%""");
+					if cv2.minMaxLoc(r)[1] > .98:
+						w = needle_img.shape[1];
+						h = needle_img.shape[0];
+						end_point = (start_point[0]+w, start_point[1]+h);
+						d = pyt.image_to_data(Image.fromarray(original_img), output_type=Output.DICT);
+						yx_filter = [(i, val) for i, val in enumerate(d['left']) if val <= start_point[0]+w and val >= start_point[0] and d['top'][i] <= start_point[1]+h and d['top'][i] >= start_point[1]];
+						text_i = yx_filter[-1][0]+1;
+						return d["text"][text_i];
+			return False;
+		else:
+			logging.debug("----------");
+			logging.error("MySQL Not connected");
+			logging.debug("----------");
+
+	def get_lxml_xpath(self, username, searchFor):
+		u_path = f"""{self.required_folders["cache"]}/{username}.html""";
+		if os.path.exists(u_path):
+			root = html.parse(u_path)
+			xpath_tmp_arr = [x.getroottree().getpath(x) for x in root.xpath(f""".//*[contains(text(),"{searchFor}")]""")];
+			if len(xpath_tmp_arr):
+				xpath = max(xpath_tmp_arr, key=len)
+				xpath_arr = xpath.split('/');
+				path_build = "";
+				for i,x in enumerate(xpath_arr):
+					tmp_attr = "";
+					if x!="":
+						elem = root.xpath("/".join(xpath_arr[:i+1]));
+						if len(elem):
+							attr = [elem[0].attrib for x2 in elem[0].attrib if x2 == "id" or "data-" in x2];
+							if len(attr):
+								x=re.sub("(\[)[0-9](\])", "", x);
+								if attr[0].has_key('id'):
+									tmp_attr += f"""[@id="{attr[0]["id"]}"]""";
+								data_key = [k for k in attr[0].keys() if "data-" in k];
+								if len(data_key):
+									tmp_attr += f"""[@{data_key[0]}='{attr[0][data_key[0]]}']""";
+						path_build += f"""/{x}{tmp_attr}""";
+				xpath_arr = path_build.split('/');
+				return ["//"+"/".join(xpath_arr[-i-1:]) for i,x in enumerate(xpath_arr) if len(root.xpath("//"+"/".join(xpath_arr[-i-1:]))) == 1][0];
+		return False;
+
 	@threaded
 	def cache_bio(self):
 		while self.get_setting("bio_snapshot"):
@@ -398,6 +471,7 @@ class MyPlaywright:
 			self.save(user);
 			self.browser.close();
 			return True;
+
 
 if __name__ == '__main__':
 	KEEP_ALIVE = False;
