@@ -1,12 +1,11 @@
 #!/usr/bin/python
 import os, logging, time, random, requests, re, threading, json
 from playwright.sync_api import sync_playwright
-import mysql.connector, io, cv2
+import mysql.connector, io, cv2, imgcompare
 import pytesseract as pyt
 from pytesseract import Output
 from lxml import html
 from PIL import Image
-from PIL import ImageChops
 
 
 logging.basicConfig(filename="log/default.log");
@@ -153,12 +152,10 @@ class MyPlaywright:
 					u_pfp = f"""{self.required_folders["pfp"]}/{username}.jpg""";
 					data["blank_pfp"] = 1;
 					if os.path.exists(u_pfp):
-						image_one = Image.open(u_pfp);
-						image_two = Image.open(blank_pfp);
-						diff = ImageChops.difference(image_one, image_two);
-						data["blank_pfp"] = 1 if not bool(diff.getbbox()) else 0;
+						is_same = imgcompare.is_equal(u_pfp, blank_pfp, tolerance=1);
+						data["blank_pfp"] = 1 if is_same else 0;
 					u_path = f"""{self.required_folders["cache"]}/{username}.html""";
-					show_msg(f"""{cached_list.index(username)}/{len(cached_list)} - {u_path} File exists: {os.path.exists(u_path)}""");
+					# show_msg(f"""{cached_list.index(username)}/{len(cached_list)} - {u_path} File exists: {os.path.exists(u_path)}""");
 					if os.path.exists(u_path):
 						root = html.parse(u_path);
 						for x in value_paths_r:
@@ -378,15 +375,16 @@ class MyPlaywright:
 					original_img = cv2.imread(u_path);
 					r = cv2.matchTemplate(map_img, needle_img, cv2.TM_CCOEFF_NORMED);
 					start_point = cv2.minMaxLoc(r)[-1];
-					show_msg(f"""{cv2.minMaxLoc(r)[1]*100}%""");
+					# show_msg(f"""{cv2.minMaxLoc(r)[1]*100}%""");
 					if cv2.minMaxLoc(r)[1] > .98:
 						w = needle_img.shape[1];
 						h = needle_img.shape[0];
 						end_point = (start_point[0]+w, start_point[1]+h);
 						d = pyt.image_to_data(Image.fromarray(original_img), output_type=Output.DICT);
 						yx_filter = [(i, val) for i, val in enumerate(d['left']) if val <= start_point[0]+w and val >= start_point[0] and d['top'][i] <= start_point[1]+h and d['top'][i] >= start_point[1]];
-						text_i = yx_filter[-1][0]+1;
-						return d["text"][text_i];
+						if len(yx_filter):
+							text_i = yx_filter[-1][0]+1;
+							return d["text"][text_i];
 			return False;
 		else:
 			logging.debug("----------");
@@ -424,7 +422,7 @@ class MyPlaywright:
 	def cache_bio(self):
 		while self.get_setting("bio_snapshot"):
 			time.sleep(1);
-			# show_msg("Bio_snapshot: On");
+			show_msg("Bio_snapshot: On");
 			usernames_list = self.get_usernames();
 			if len(usernames_list):
 				for i,user in enumerate(usernames_list):
