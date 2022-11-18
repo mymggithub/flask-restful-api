@@ -1,13 +1,9 @@
-# Build Environment: Playwright
 FROM mcr.microsoft.com/playwright/python:v1.21.0-focal
-RUN pip install mysql-connector
-RUN pip install requests
-RUN pip install Pillow
-RUN pip install lxml
-
+RUN apt-get update && apt-get install tesseract-ocr -y
 
 COPY . /home/pwuser
 WORKDIR /home/pwuser
+RUN pip install -r requirements.txt
 
 # CMD ["sleep", "216000"]
-CMD [ "python", "app.py" ]
+CMD [ "python3", "app.py" ]
