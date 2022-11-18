@@ -208,17 +208,17 @@ $(function () {
                 field: "bday",
                 title: "B-Day",
                 width: 100,
-            }
-            // {
-            //     field: "location",
-            //     title: "Location",
-            //     width: 300,
-            // }, 
-            // {
-            //     field: "link",
-            //     title: "Link",
-            //     width: 300,
-            // }, 
+            },
+            {
+                field: "location",
+                title: "Location",
+                width: 300,
+            }, 
+            {
+                field: "link",
+                title: "Link",
+                width: 300,
+            }, 
             // { command: "destroy", title: "&nbsp;", width: 120 }
         ],
         filter: onFilter,
