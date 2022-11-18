@@ -31,7 +31,7 @@ class IsOnline(Resource):
 		try:
 			mydb = mysql.connector.connect(**DBconfig);
 			mycursor = mydb.cursor(dictionary=True, buffered=True);
-			sql_query = f"""SELECT * FROM twitter;""";
+			sql_query = f"""SELECT * FROM `proj_data`;""";
 			mycursor.execute(sql_query);
 			myresult = mycursor.fetchone();
 			mydb.close();
