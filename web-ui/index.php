@@ -90,6 +90,7 @@
                     <ul class="navbar-nav text-light" id="accordionSidebar">
                         <li class="nav-item"><a class="nav-link" href="http://<?php echo $_SERVER['SERVER_NAME'] ?>:9002" target="_blank"><i class="fas fa-tachometer-alt"></i><span>Portainer</span></a></li>
                         <li class="nav-item"><a class="nav-link" href="http://<?php echo $_SERVER['SERVER_NAME'] ?>:9001" target="_blank"><i class="fas fa-table"></i><span>MySQL</span></a></li>
+                        <li class="nav-item"><a class="nav-link" href="http://<?php echo $_SERVER['SERVER_NAME'] ?>:8080" target="_blank"><i class="fas fa-book"></i><span>Sandbox</span></a></li>
                     </ul>
                     <div class="text-center d-none d-md-inline"><button class="btn rounded-circle border-0" id="sidebarToggle" type="button"></button></div>
                 </div>

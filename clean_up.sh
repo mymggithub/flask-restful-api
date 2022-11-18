@@ -1,10 +1,12 @@
 #!/bin/sh
 docker-compose stop
 docker rm pw-snapshot
+docker rm sandbox
 docker rm simple-api-apache-ui-1
 docker rm simple-api-phpmyadmin-1
 docker rm simple-api-mysql-db-1
 docker rm simple-api-flask-api-1
+docker rmi simple-api-sandbox
 docker rmi simple-api-pw-snapshot
 docker rmi simple-api-flask-api
 docker rmi phpmyadmin

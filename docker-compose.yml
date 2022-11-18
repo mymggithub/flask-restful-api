@@ -37,6 +37,7 @@ services:
     build: ./flask-api
     volumes:
       - api-log:/opt/source-code/log
+      - ${PWD}/flask-api/requirements.txt:/opt/source-code/requirements.txt
       - ${PWD}/flask-api/app.py:/opt/source-code/app.py
       - ${PWD}/./config/:/opt/source-code/config/
     restart: always
@@ -80,18 +81,19 @@ services:
       - front-end
       - back-end  
 
-  # sandbox:
-  #   build: ./sandbox
-  #   volumes:
-  #     - ${PWD}/sandbox:/home/pwuser
-  #   restart: always
-  #   ports:
-  #     - 8080:8080
-  #   depends_on:
-  #     - mysql_db
-  #   networks:
-  #     - front-end
-  #     - back-end
+  sandbox:
+    container_name: sandbox
+    build: ./sandbox
+    volumes:
+      - ${PWD}/sandbox:/home/pwuser
+    restart: always
+    ports:
+      - 8080:8080
+    depends_on:
+      - mysql-db
+    networks:
+      - front-end
+      - back-end
 
 networks:
   front-end:
