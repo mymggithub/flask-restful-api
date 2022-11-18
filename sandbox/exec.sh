@@ -1,2 +1,2 @@
 #!/bin/sh
-docker exec -it simple-api-sandbox-1 /bin/bash
+docker exec -it sandbox /bin/bash

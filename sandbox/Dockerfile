@@ -1,12 +1,9 @@
-# Build Environment: Playwright
 FROM mcr.microsoft.com/playwright/python:v1.21.0-focal
-RUN pip install mysql-connector
-RUN pip install notebook
-RUN pip install requests
-RUN pip install Pillow
-
+RUN apt-get update && apt-get install python3-pip tesseract-ocr screen -y
+#RUN python3 -m pip install --upgrade pip
 
 COPY . /home/pwuser
 WORKDIR /home/pwuser
+RUN pip install -r requirements.txt
 
-CMD ["sleep", "216000"]
+CMD ["bash", "note.sh"]
